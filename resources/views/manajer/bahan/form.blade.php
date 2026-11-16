@@ -1,39 +1,33 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <title>{{ $bahan->exists ? 'Ubah' : 'Tambah' }} Bahan</title>
-    <style>
-        body { font-family: sans-serif; margin: 24px; max-width: 420px; }
-        label { display: block; margin-top: 12px; }
-        input { width: 100%; padding: 6px; box-sizing: border-box; }
-        .error { color: #c00; font-size: 13px; }
-        .btn { margin-top: 16px; padding: 6px 14px; }
-    </style>
-</head>
-<body>
-    <h1>{{ $bahan->exists ? 'Ubah' : 'Tambah' }} Bahan</h1>
+@extends('layouts.manajer')
 
-    <form method="POST" action="{{ $bahan->exists ? '/manajer/bahan/'.$bahan->id : '/manajer/bahan' }}">
+@section('title', ($bahan->exists ? 'Ubah' : 'Tambah') . ' Bahan')
+
+@section('konten')
+    <h1 class="judul">{{ $bahan->exists ? 'Ubah' : 'Tambah' }} Bahan</h1>
+    <p class="sub">Nama bahan, satuan dasar (g/ml/pcs), harga per satuan, batas minimum</p>
+
+    <form class="kartu" method="POST"
+          action="{{ $bahan->exists ? '/manajer/bahan/'.$bahan->id : '/manajer/bahan' }}">
         @csrf
         @if ($bahan->exists) @method('PUT') @endif
 
         @foreach ([
-            'nama' => 'Nama',
-            'satuan_dasar' => 'Satuan dasar (gram, ml, pcs)',
-            'stok' => 'Stok',
+            'nama' => 'Nama bahan',
+            'satuan_dasar' => 'Satuan dasar (g, ml, pcs)',
+            'stok' => 'Stok saat ini',
             'batas_minimum' => 'Batas minimum',
             'harga_per_satuan' => 'Harga per satuan (Rp)',
         ] as $field => $label)
             <label for="{{ $field }}">{{ $label }}</label>
             <input id="{{ $field }}" name="{{ $field }}"
-                   type="{{ in_array($field, ['nama','satuan_dasar']) ? 'text' : 'number' }}"
+                   type="{{ in_array($field, ['nama', 'satuan_dasar']) ? 'text' : 'number' }}"
                    step="0.01" value="{{ old($field, $bahan->$field) }}">
             @error($field) <div class="error">{{ $message }}</div> @enderror
         @endforeach
 
-        <button class="btn" type="submit">Simpan</button>
-        <a href="/manajer/bahan">Batal</a>
+        <div style="margin-top:20px">
+            <button class="btn btn-isi" type="submit">Simpan</button>
+            <a class="btn btn-garis" href="/manajer/bahan">Batal</a>
+        </div>
     </form>
-</body>
-</html>
+@endsection
