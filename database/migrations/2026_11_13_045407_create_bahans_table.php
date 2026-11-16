@@ -6,13 +6,11 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-        Schema::create('bahans', function (Blueprint $table){
+        Schema::create('bahans', function (Blueprint $table) {
             $table->id();
+            $table->string('kode')->nullable()->unique();
             $table->string('nama');
             $table->string('satuan_dasar');
             $table->decimal('stok', 12, 2)->default(0);
@@ -23,9 +21,6 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('bahans');

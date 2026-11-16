@@ -50,8 +50,39 @@
 
         .kartu { border: 1.5px solid #e2ddd7; border-radius: 12px; padding: 20px; max-width: 520px; }
         .kartu label { display: block; margin-top: 14px; font-size: 13px; color: #65574b; }
-        .kartu input { width: 100%; padding: 10px; margin-top: 4px; border: 1px solid #ded7d0; border-radius: 6px; font-size: 14px; }
+        .kartu input, .kartu select { width: 100%; padding: 10px; margin-top: 4px; border: 1px solid #ded7d0; border-radius: 6px; font-size: 14px; background: #fff; }
         .error { color: #b03a2e; font-size: 13px; margin-top: 4px; }
+        .baris-form { display: flex; gap: 20px; align-items: flex-end; }
+        .baris-form > div { flex: 1; }
+        .baris-form label { display: block; font-size: 14px; color: #51463d; margin-bottom: 6px; }
+        .baris-form input, .baris-form select { width: 100%; padding: 11px 12px; border: 1.5px solid #d8d2cb; border-radius: 8px; font-size: 14px; background: #fff; }
+
+        /* ---- percantik tabel ---- */
+        table.tabel { border-radius: 10px; overflow: hidden; background: #fff; }
+        table.tabel td { padding: 16px 14px; vertical-align: middle; }
+        table.tabel th { padding: 14px; text-transform: uppercase; letter-spacing: .4px; font-size: 12px; }
+        table.tabel tbody tr:hover td { background: #fbf9f7; }
+        .angka { font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .nama-menu { font-weight: 700; font-size: 14px; color: #29231f; }
+
+        .pil { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+        .pil-kat { background: #efe8e1; color: #60442f; }
+        .pil-aktif { background: #e3f1e0; color: #2e7d32; }
+        .pil-habis { background: #fdecea; color: #b03a2e; }
+        .pil-nonaktif { background: #ececec; color: #6b6b6b; }
+
+        .chips { display: flex; flex-wrap: wrap; gap: 6px; max-width: 320px; }
+        .chip { background: #f4f0ec; border: 1px solid #e2ddd7; border-radius: 6px; padding: 3px 8px; font-size: 12px; color: #453c35; white-space: nowrap; }
+        .chip b { color: #60442f; }
+        .kosong { color: #a09488; font-style: italic; font-size: 12px; }
+
+        .margin-plus { color: #2e7d32; font-weight: 700; }
+        .margin-minus { color: #b03a2e; font-weight: 700; }
+
+        .aksi-grup { display: flex; gap: 8px; align-items: center; }
+        .btn-mini { padding: 6px 12px; border: 1px solid #6f4e37; border-radius: 6px; background: #fff; color: #5a4030; font-size: 12px; cursor: pointer; text-decoration: none; }
+        .btn-mini:hover { background: #f4f0ec; }
+        .btn-mini.abu { border-color: #cfc7bf; color: #7a6f65; }
     </style>
 </head>
 <body>
@@ -62,15 +93,11 @@
 
     <aside class="sidebar">
         <div class="label">MANAJER</div>
-        <a class="menu {{ request()->is('manajer/dashboard') ? 'aktif' : '' }}" href="/manajer/dashboard">Dashboard</a>
-        <a class="menu {{ request()->is('manajer/bahan*') ? 'aktif' : '' }}" href="/manajer/bahan">Inventaris</a>
-        <a class="menu" href="#">Resep</a>
-        <a class="menu" href="#">Manajemen Menu</a>
-        <a class="menu" href="#">Stok Masuk</a>
-        <a class="menu" href="#">Import Data CSV</a>
-        <a class="menu" href="#">Harga Supplier</a>
+        <a class="menu {{ request()->is('manajer/bahan*') ? 'aktif' : '' }}" href="/manajer/bahan">Kelola Bahan</a>
+        <a class="menu {{ request()->is('manajer/menu*') ? 'aktif' : '' }}" href="/manajer/menu">Menu &amp; Resep</a>
+        <a class="menu {{ request()->is('manajer/stok-masuk*') ? 'aktif' : '' }}" href="/manajer/stok-masuk">Stok Masuk</a>
         <a class="menu" href="#">Laporan</a>
-        <a class="menu" href="#">Pengaturan Akun</a>
+        <a class="menu" href="#">Import CSV</a>
         <a class="keluar" href="/logout">Keluar dari sistem</a>
     </aside>
 

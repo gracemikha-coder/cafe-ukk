@@ -13,9 +13,10 @@ return new class extends Migration
     {
         Schema::create('menus', function(Blueprint $table){
             $table->id();
+            $table->string('kode')->nullable()->unique();
             $table->string('nama');
-            $table->string('kategori');
-            $table->decimal('harga', 12,2);
+            $table->foreignId('kategori_id')->constrained('kategoris');
+            $table->decimal('harga', 12, 2);
             $table->boolean('aktif')->default(true);
             $table->timestamps();
         });

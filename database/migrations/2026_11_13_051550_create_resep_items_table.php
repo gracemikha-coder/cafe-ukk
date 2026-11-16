@@ -6,22 +6,17 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-        Schema::create('resep_items', function (Blueprint $table){
+        Schema::create('resep_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('menu_id')->constrained('menus')->cascadeOnDelete();
             $table->foreignId('bahan_id')->constrained('bahans');
-            $table->decimal('takaran', 12,2);
+            $table->decimal('takaran', 12, 2);
+            $table->unique(['menu_id', 'bahan_id']);
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('resep_items');

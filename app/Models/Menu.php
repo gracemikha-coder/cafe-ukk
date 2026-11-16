@@ -7,8 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 class Menu extends Model
 {
     protected $fillable = [
+        'kode',
         'nama',
-        'kategori',
+        'kategori_id',
         'harga',
         'aktif',
     ];
@@ -18,11 +19,33 @@ class Menu extends Model
         'aktif' => 'boolean',
     ];
 
+    // ---- Relasi ----
+    public function kategori()
+    {
+        return $this->belongsTo(Kategori::class);
+    }
+
+    public function resepItems()
+    {
+        return $this->hasMany(ResepItem::class);
+    }
+
+    public function itemPesanans()
+    {
+        return $this->hasMany(ItemPesanan::class);
+    }
+
+    // ---- Method sesuai class diagram ----
+    public function hasRecipe(): bool
+    {
+        return $this->resepItems()->exists();
+    }
+
     // Habis kalau bahan tidak cukup untuk satu porsi
     public function isHabis(): bool
     {
-        foreach ($this->resepItems()->with('bahan')->get()as $item){
-            if($item->bahan ->stok < $item->takaran){
+        foreach ($this->resepItems()->with('bahan')->get() as $item) {
+            if ($item->bahan->stok < $item->takaran) {
                 return true;
             }
         }
@@ -32,14 +55,14 @@ class Menu extends Model
     public function hitungHPP(): float
     {
         $total = 0;
-        foreach ($this->resepItem()->with('bahan')->get() as $item){
+        foreach ($this->resepItems()->with('bahan')->get() as $item) {
             $total += $item->takaran * $item->bahan->harga_per_satuan;
         }
-        return $total;
+        return (float) $total;
     }
 
     public function hitungMargin(): float
     {
-        return (float) $this->harga - $this->hitungHpp();
+        return (float) $this->harga - $this->hitungHPP();
     }
 }

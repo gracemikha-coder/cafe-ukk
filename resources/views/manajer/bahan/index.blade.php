@@ -25,6 +25,7 @@
                 <th>Stok Saat Ini</th>
                 <th>Batas Minimum</th>
                 <th>Harga / Satuan</th>
+                <th>Harga Diperbarui</th>
                 <th>Status</th>
                 <th>Aksi</th>
             </tr>
@@ -37,6 +38,7 @@
                     <td>{{ number_format($b->stok, 0, ',', '.') }}</td>
                     <td>{{ number_format($b->batas_minimum, 0, ',', '.') }}</td>
                     <td>Rp {{ number_format($b->harga_per_satuan, 0, ',', '.') }}</td>
+                    <td>{{ $b->harga_diperbarui_pada?->format('d/m/Y') ?? '-' }}</td>
                     <td>
                         @if ($b->isMenipis())
                             <span class="badge">Menipis</span>
@@ -46,12 +48,6 @@
                     </td>
                     <td>
                         <a class="link-aksi" href="/manajer/bahan/{{ $b->id }}/edit">Edit</a>
-                        <form action="/manajer/bahan/{{ $b->id }}" method="POST" style="display:inline"
-                              onsubmit="return confirm('Hapus bahan ini?')">
-                            @csrf
-                            @method('DELETE')
-                            <button class="link-aksi hapus" type="submit">Hapus</button>
-                        </form>
                     </td>
                 </tr>
             @empty

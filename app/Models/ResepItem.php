@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class ResepItem extends Model
 {
+    public $timestamps = false;
+
     protected $fillable = [
         'menu_id',
         'bahan_id',

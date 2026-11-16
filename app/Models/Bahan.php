@@ -6,7 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Bahan extends Model
 {
-     protected $fillable = [
+    protected $fillable = [
+        'kode',
         'nama',
         'satuan_dasar',
         'stok',
@@ -15,7 +16,7 @@ class Bahan extends Model
         'harga_diperbarui_pada',
     ];
 
-     protected $casts = [
+    protected $casts = [
         'stok' => 'decimal:2',
         'batas_minimum' => 'decimal:2',
         'harga_per_satuan' => 'decimal:2',
@@ -36,5 +37,4 @@ class Bahan extends Model
     {
         return $this->hasMany(StokMasuk::class);
     }
-    
 }
