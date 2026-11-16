@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BahanController;
+use App\Http\Controllers\KasirPesananController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\StokMasukController;
 use Illuminate\Support\Facades\Route;
@@ -31,5 +32,10 @@ Route::middleware(['auth', 'role:manajer'])->prefix('manajer')->group(function (
 });
 
 Route::middleware(['auth', 'role:kasir'])->prefix('kasir')->group(function () {
-    Route::get('/dashboard', fn () => 'Dashboard Kasir');
+    Route::get('/pesanan', [KasirPesananController::class, 'index']);
+    Route::get('/pesanan/create', [KasirPesananController::class, 'create']);
+    Route::post('/pesanan', [KasirPesananController::class, 'store']);
+    Route::get('/pesanan/{pesanan}', [KasirPesananController::class, 'show']);
+    Route::patch('/pesanan/{pesanan}/status', [KasirPesananController::class, 'ubahStatus']);
+    Route::post('/pesanan/{pesanan}/batal', [KasirPesananController::class, 'batalkan']);
 });

@@ -23,8 +23,8 @@ class AuthController extends Controller
             $request->session()->regenerate();
 
             return Auth::user()->role === 'manajer'
-                ? redirect('/manajer/dashboard')
-                : redirect('/kasir/dashboard');
+                ? redirect('/manajer/bahan')
+                : redirect('/kasir/pesanan/create');
         }
 
         return back()

@@ -12,12 +12,12 @@ return new class extends Migration
     public function up(): void
     {
        Schema::create('stok_masuks', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('bahan_id')->constrained('bahans');
-            $table->foreignId('user_id')->constrained('users');
-            $table->date('tanggal');
-            $table->decimal('jumlah', 12, 2);
-            $table->timestamps();
+          $table->id();
+          $table->foreignId('bahan_id')->constrained('bahans');
+          $table->foreignId('user_id')->constrained('users');
+          $table->date('tanggal');
+          $table->decimal('jumlah', 12, 2);
+          $table->timestamps();
         });
     }
 

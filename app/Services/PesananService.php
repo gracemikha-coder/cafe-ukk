@@ -150,6 +150,52 @@ class PesananService
             return $pesanan;
         });
     }
+        /**
+     * Ubah status berurutan: Baru -> Diproses -> Selesai.
+     */
+    public function ubahStatus(Pesanan $pesanan, string $tujuan): Pesanan
+    {
+        return DB::transaction(function () use ($pesanan, $tujuan) {
+            $p = Pesanan::lockForUpdate()->findOrFail($pesanan->id);
+
+            if (in_array($p->status, ['Selesai', 'Batal'])) {
+                $this->gagal("Pesanan sudah {$p->status} dan tidak dapat diubah.");   // NTF-11
+            }
+
+            $berikut = ['Baru' => 'Diproses', 'Diproses' => 'Selesai'][$p->status] ?? null;
+            if ($tujuan !== $berikut) {
+                $this->gagal('Status hanya dapat berubah berurutan: Baru, Diproses, Selesai.');   // NTF-10
+            }
+
+            $p->update(['status' => $tujuan]);
+            return $p;
+        });
+    }
+
+    /**
+     * Batalkan pesanan (hanya saat Baru), stok dikembalikan dari catatan pemakaian.
+     */
+    public function batalkan(Pesanan $pesanan): Pesanan
+    {
+        return DB::transaction(function () use ($pesanan) {
+            $p = Pesanan::lockForUpdate()->findOrFail($pesanan->id);
+
+            if ($p->status === 'Batal') {
+                $this->gagal('Pesanan sudah Batal dan tidak dapat diubah.');   // NTF-11
+            }
+            if ($p->status !== 'Baru') {
+                $this->gagal('Pesanan hanya dapat dibatalkan saat berstatus Baru.');   // NTF-12
+            }
+
+            foreach ($p->pemakaianBahans as $pakai) {
+                $bahan = Bahan::lockForUpdate()->find($pakai->bahan_id);
+                $bahan->update(['stok' => (float) $bahan->stok + (float) $pakai->jumlah]);
+            }
+
+            $p->update(['status' => 'Batal']);
+            return $p;
+        });
+    }
 
     private function gagal(string $pesan): void
     {
