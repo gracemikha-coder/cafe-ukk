@@ -26,4 +26,15 @@ class Bahan extends Model
     {
         return $this->stok <= $this->batas_minimum;
     }
+
+    public function resepItems()
+    {
+        return $this->hasMany(ResepItem::class);
+    }
+
+    public function stokMasuks()
+    {
+        return $this->hasMany(StokMasuk::class);
+    }
+    
 }

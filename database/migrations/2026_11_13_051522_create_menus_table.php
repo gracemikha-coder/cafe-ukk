@@ -11,8 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('menus', function (Blueprint $table) {
+        Schema::create('menus', function(Blueprint $table){
             $table->id();
+            $table->string('nama');
+            $table->string('kategori');
+            $table->decimal('harga', 12,2);
+            $table->boolean('aktif')->default(true);
             $table->timestamps();
         });
     }

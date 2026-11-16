@@ -13,6 +13,14 @@ return new class extends Migration
     {
         Schema::create('pesanans', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('user_id')->constrained('users');
+            $table->unsignedTinyInteger('nomor_meja');
+            $table->string('metode_bayar');
+            $table->string('status')->default('pending');
+            $table->decimal('subtotal', 12,2);
+            $table->decimal('sevice', 12,2);
+            $table->decimal('pajak', 12, 2);
+            $table->decimal('total', 12, 2);
             $table->timestamps();
         });
     }

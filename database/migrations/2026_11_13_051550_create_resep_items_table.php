@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('resep_items', function (Blueprint $table) {
+        Schema::create('resep_items', function (Blueprint $table){
             $table->id();
-            $table->timestamps();
+            $table->foreignId('menu_id')->constrained('menus')->cascadeOnDelete();
+            $table->foreignId('bahan_id')->constrained('bahans');
+            $table->decimal('takaran', 12,2);
         });
     }
 

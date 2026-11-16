@@ -26,7 +26,13 @@ class User extends Authenticatable
     {
         return [
             'password' => 'hashed',
+            'wajib_ganti_password' => 'boolean',
             
         ];
+    }
+
+    public function pesanans()
+    {
+        return $this->hasMany(Pesanan::class);
     }
 }

@@ -13,6 +13,9 @@ return new class extends Migration
     {
         Schema::create('pemakaian_bahans', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('pesanan_id')->constrained('pesanans')->cascadeOnDelete();
+            $table->foreignId('bahan_id')->constrained('bahans');
+            $table->decimal('jumlah', 12, 2);   // jumlah yang dipotong, dipakai saat pembatalan
             $table->timestamps();
         });
     }

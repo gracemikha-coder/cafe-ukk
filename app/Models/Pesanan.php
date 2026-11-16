@@ -6,5 +6,30 @@ use Illuminate\Database\Eloquent\Model;
 
 class Pesanan extends Model
 {
-    //
+    protected $fillable = [
+        'user_id',
+        'nomor_meja',
+        'metode_bayar',
+        'status',
+        'subtotal',
+        'subtotal',
+        'service',
+        'pajak',
+        'total',
+    ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function items()
+    {
+        return $this->hasMany(ItemPesanan::class);
+    }
+
+    public function pemakaianBahans()
+    {
+        return $this->hasMany(PemakaianBahan::class);
+    }
 }
