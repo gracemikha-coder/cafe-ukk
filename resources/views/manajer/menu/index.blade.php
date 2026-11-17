@@ -1,10 +1,10 @@
 @extends('layouts.manajer')
 
-@section('title', 'Menu & Resep - Kopi Senja')
+@section('title', 'Menu - Kopi Senja')
 
 @section('konten')
-    <h1 class="judul">Menu &amp; Resep</h1>
-    <p class="sub">Kelola menu, resep, HPP, dan margin</p>
+    <h1 class="judul">Menu</h1>
+    <p class="sub">Kelola menu, harga, status, HPP, dan margin. Resep dikelola di halaman Resep.</p>
 
     @if (session('sukses'))
         <div class="sukses">{{ session('sukses') }}</div>
@@ -65,6 +65,7 @@
                     </td>
                     <td>
                         <a class="link-aksi" href="/manajer/menu/{{ $m->id }}/edit">Edit</a>
+                        <a class="link-aksi" style="margin-left:10px" href="/manajer/resep/{{ $m->id }}">Resep</a>
                         <form action="/manajer/menu/{{ $m->id }}/toggle" method="POST" style="display:inline">
                             @csrf
                             @method('PATCH')
