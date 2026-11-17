@@ -4,14 +4,26 @@
 
 @section('konten')
     <h1 class="judul">Inventaris / Kelola Bahan</h1>
-    <p class="sub">Kelola operasional Kedai Kopi Senja</p>
+    <p class="sub">
+        Kelola operasional Kedai Kopi Senja.
+        Harga bahan terakhir diperbarui: {{ $bahans->max('harga_diperbarui_pada')?->format('d/m/Y') ?? '-' }}
+    </p>
 
     @if (session('sukses'))
         <div class="sukses">{{ session('sukses') }}</div>
     @endif
 
+    @if (session('peringatan'))
+        <div style="background:#fff4d6;border:1px solid #ecd48a;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:14px;color:#7a5a00">
+            {{ session('peringatan') }}
+        </div>
+    @endif
+
     <div class="aksi-atas">
-        <a class="btn btn-garis" href="#">Impor CSV</a>
+        <form method="POST" action="/manajer/supplier/perbarui-harga" style="display:inline">
+            @csrf
+            <button type="submit" class="btn btn-garis">Perbarui Harga dari Supplier</button>
+        </form>
         <a class="btn btn-isi" href="/manajer/bahan/create">Tambah Bahan</a>
     </div>
 
@@ -37,7 +49,7 @@
                     <td>{{ $b->satuan_dasar }}</td>
                     <td>{{ number_format($b->stok, 0, ',', '.') }}</td>
                     <td>{{ number_format($b->batas_minimum, 0, ',', '.') }}</td>
-                    <td>Rp {{ number_format($b->harga_per_satuan, 0, ',', '.') }}</td>
+                    <td>Rp {{ number_format($b->harga_per_satuan, 2, ',', '.') }}</td>
                     <td>{{ $b->harga_diperbarui_pada?->format('d/m/Y') ?? '-' }}</td>
                     <td>
                         @if ($b->isMenipis())
@@ -51,7 +63,7 @@
                     </td>
                 </tr>
             @empty
-                <tr><td colspan="7">Belum ada bahan.</td></tr>
+                <tr><td colspan="8">Belum ada bahan.</td></tr>
             @endforelse
         </tbody>
     </table>

@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    'supplier' => [
+    'url'     => env('LAYANAN_URL'),
+    'key'     => env('LAYANAN_API_KEY'),
+    'timeout' => 5,
+],
+
+
 ];
