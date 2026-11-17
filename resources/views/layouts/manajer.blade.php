@@ -94,10 +94,10 @@
     <aside class="sidebar">
         <div class="label">MANAJER</div>
         <a class="menu {{ request()->is('manajer/bahan*') ? 'aktif' : '' }}" href="/manajer/bahan">Kelola Bahan</a>
-        <a class="menu {{ request()->is('manajer/menu*') ? 'aktif' : '' }}" href="/manajer/menu">Menu &amp; Resep</a>
+        <a class="menu {{ request()->is('manajer/menu*') ? 'aktif' : '' }}" href="/manajer/menu">Menu</a>
+        <a class="menu {{ request()->is('manajer/resep*') ? 'aktif' : '' }}" href="/manajer/resep">Resep</a>
         <a class="menu {{ request()->is('manajer/stok-masuk*') ? 'aktif' : '' }}" href="/manajer/stok-masuk">Stok Masuk</a>
-        <a class="menu" href="#">Laporan</a>
-        <a class="menu" href="#">Import CSV</a>
+        <a class="menu {{ request()->is('manajer/laporan*') ? 'aktif' : '' }}" href="/manajer/laporan">Laporan</a>
         <a class="keluar" href="/logout">Keluar dari sistem</a>
     </aside>
 

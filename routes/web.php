@@ -5,6 +5,9 @@ use App\Http\Controllers\BahanController;
 use App\Http\Controllers\KasirPesananController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\StokMasukController;
+use App\Http\Controllers\LaporanController;
+use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\ResepController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/login');
@@ -29,6 +32,13 @@ Route::middleware(['auth', 'role:manajer'])->prefix('manajer')->group(function (
 
     Route::get('/stok-masuk', [StokMasukController::class, 'index']);
     Route::post('/stok-masuk', [StokMasukController::class, 'store']);
+    Route::get('/laporan', [LaporanController::class, 'index']);
+    Route::post('/supplier/perbarui-harga', [SupplierController::class, 'perbarui']);
+
+    Route::get('/resep', [ResepController::class, 'index']);
+    Route::get('/resep/{menu}', [ResepController::class, 'show']);
+    Route::post('/resep/{menu}', [ResepController::class, 'store']);
+    Route::delete('/resep/{menu}/{item}', [ResepController::class, 'destroy']);
 });
 
 Route::middleware(['auth', 'role:kasir'])->prefix('kasir')->group(function () {
