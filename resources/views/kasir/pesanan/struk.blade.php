@@ -37,7 +37,9 @@
 
         <div class="baris-struk"><span>No. pesanan</span><span>#{{ $pesanan->id }}</span></div>
         <div class="baris-struk"><span>Tanggal</span><span>{{ $pesanan->created_at->format('d/m/Y H:i') }}</span></div>
-        <div class="baris-struk"><span>Meja</span><span>{{ $pesanan->nomor_meja }}</span></div>
+        @if ($pesanan->nomor_meja)
+            <div class="baris-struk"><span>Meja</span><span>{{ $pesanan->nomor_meja }}</span></div>
+        @endif
         <div class="baris-struk"><span>Metode bayar</span><span>{{ $pesanan->metode_bayar }}</span></div>
         <div class="baris-struk"><span>Status</span><span>{{ $pesanan->status }}</span></div>
 

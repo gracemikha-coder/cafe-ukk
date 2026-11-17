@@ -64,11 +64,7 @@
     <h1 class="judul">Buat Pesanan</h1>
     <p class="sub">Pilih menu untuk pesanan</p>
 
-    <div class="notif" id="notif">
-        @foreach ($errors->all() as $pesan)
-            <div>{{ $pesan }}</div>
-        @endforeach
-    </div>
+   <div class="notif" id="notif">@foreach ($errors->all() as $pesan)<div>{{ $pesan }}</div>@endforeach</div>
 
     <form method="POST" action="/kasir/pesanan" id="form-pesanan">
         @csrf
@@ -104,11 +100,7 @@
             {{-- Kanan: ringkasan --}}
             <div class="ringkasan">
                 <h2>Ringkasan Pesanan</h2>
-                <div class="kecil">Meja dan item pesanan</div>
-
-                <label for="nomor_meja">Nomor meja</label>
-                <input id="nomor_meja" name="nomor_meja" type="number" min="1" max="10"
-                       placeholder="Pilih meja 1-10" value="{{ old('nomor_meja') }}">
+                <div class="kecil">item pesanan</div>
 
                 <label for="metode_bayar">Metode bayar</label>
                 <select id="metode_bayar" name="metode_bayar">

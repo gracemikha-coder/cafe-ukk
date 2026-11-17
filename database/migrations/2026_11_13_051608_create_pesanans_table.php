@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('pesanans', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users');
-            $table->unsignedTinyInteger('nomor_meja');
+            $table->unsignedTinyInteger('nomor_meja')->nullable(); 
             $table->string('metode_bayar');
             $table->string('status')->default('Baru');
             $table->decimal('subtotal', 12, 2);

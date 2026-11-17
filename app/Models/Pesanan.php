@@ -12,7 +12,6 @@ class Pesanan extends Model
         'metode_bayar',
         'status',
         'subtotal',
-        'subtotal',
         'service',
         'pajak',
         'total',

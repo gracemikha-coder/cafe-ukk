@@ -114,7 +114,7 @@ class PesananService
 
             $pesanan = Pesanan::create([
                 'user_id'      => $user->id,
-                'nomor_meja'   => $data['nomor_meja'],
+                'nomor_meja'   => $data['nomor_meja'] ?? null,
                 'metode_bayar' => $data['metode_bayar'],
                 'status'       => 'Baru',
                 'subtotal'     => $biaya['subtotal'],
