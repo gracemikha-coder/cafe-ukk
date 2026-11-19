@@ -95,6 +95,7 @@
         <div class="label">KASIR</div>
         <a class="menu {{ request()->is('kasir/pesanan/create') ? 'aktif' : '' }}" href="/kasir/pesanan/create">Buat Pesanan</a>
         <a class="menu {{ request()->is('kasir/pesanan') ? 'aktif' : '' }}" href="/kasir/pesanan">Daftar Pesanan</a>
+        <a class="menu {{ request()->is('kasir/pelanggan*') ? 'aktif' : '' }}" href="/kasir/pelanggan">Pelanggan</a>
         <a class="keluar" href="/logout">Keluar dari sistem</a>
     </aside>
 

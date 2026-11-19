@@ -9,6 +9,7 @@ use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\ResepController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\KasirPelangganController;
 
 Route::redirect('/', '/login');
 
@@ -48,4 +49,6 @@ Route::middleware(['auth', 'role:kasir'])->prefix('kasir')->group(function () {
     Route::get('/pesanan/{pesanan}', [KasirPesananController::class, 'show']);
     Route::patch('/pesanan/{pesanan}/status', [KasirPesananController::class, 'ubahStatus']);
     Route::post('/pesanan/{pesanan}/batal', [KasirPesananController::class, 'batalkan']);
+    Route::get('/pelanggan', [KasirPelangganController::class, 'index']);
+    Route::post('/pelanggan/{pelanggan}/reset-password', [KasirPelangganController::class, 'resetPassword']);
 });

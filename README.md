@@ -1,3 +1,22 @@
+## 1. Ringkasan
+**Kopi Senja** adalah sistem pengelolaan untuk kedai Kopi Senja milik Kak Rani. Penggunanya ada tiga peran: **Manajer** yang mengelola bahan, menu, resep, stok masuk, dan membaca laporan, **Pelanggan** yang membuat pesanan, mengubah status pesanan dan mereset password pelanggan(belum jadi) lewat tampilan web , **pelanggan** yang memesan sendiri lewat APK(baru sampai login dan masuk ke halaman tampilan menu belum sampai selesai)
+
+Masalah utama klien : Pesanan masih ditulis di kertas, stok bahan baru dihitung setelah kedai tutup sehingga sering salah, harga bahan berubah ubah sehingga biaya pokok menu tidak jelas, dan data bahan, menu, serta resep tersebar di berkas Excel yang tidak rapi.  
+
+Alur kerja yang saya bangun: Manajer mengisi bahan dan harganya (bisa diperbarui dari layanan Supplier), lalu menyusun menu dan resepnya, sehingga **HPP dan margin** tiap menu dihitung otomatis. Saat Kasir membuat pesanan, sistem memeriksa stok bahan dari resep (kebutuhan gabungan seluruh item), mengurangi stok, dan membuat struk berisi service 5% dan pajak 10%. Pesanan berjalan Baru, Diproses, Selesai, dan hanya bisa dibatalkan saat Baru (stok dikembalikan). Manajer melihat laporan penjualan per menu dan bahan yang hampir habis.
+
+
+## 5. Akun Uji
+
+| Peran | Username / No HP | Password | Dipakai di |
+|---|---|---|---|
+| Kasir | kasir | kasir12345 | Web |
+| Manajer | manajer | manajer12345 | Web |
+| Pelanggan | 081323668459 | pelanggan123 | APK |
+
+Password di atas khusus untuk uji.
+
+
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
 <p align="center">

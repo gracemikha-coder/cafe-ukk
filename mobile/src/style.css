@@ -1,0 +1,708 @@
+:root {
+  --bg-color: #fcfbfa;
+  --card-bg: #f0ebe6;
+  --accent-brown: #5c3a21;
+  --border-color: #e3deda;
+  --text-color: #3d2616;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-color);
+  font-family: Arial, sans-serif;
+  color: var(--text-color);
+}
+
+#app {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+}
+
+.mobile-frame {
+  width: 100%;
+  max-width: 420px;
+  min-height: 100vh;
+  background: var(--bg-color);
+  padding: 32px 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.login-logo-box {
+  width: 100%;
+  min-height: 120px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  margin-bottom: 36px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.logo-placeholder {
+  width: 38px;
+  height: 38px;
+  border: 2px solid var(--accent-brown);
+  border-radius: 50%;
+  margin-bottom: 8px;
+}
+
+.login-logo-box h1 {
+  margin: 0;
+  color: var(--accent-brown);
+  font-size: 20px;
+}
+
+.login-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.login-container h2 {
+  font-size: 22px;
+  margin: 0 0 8px;
+  color: var(--text-color);
+}
+
+.description {
+  font-size: 13px;
+  color: #81766e;
+  margin: 0 0 24px;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.login-form label {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: -5px;
+}
+
+.input-field {
+  width: 100%;
+  padding: 13px 14px;
+  background: #fff;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 14px;
+  color: var(--text-color);
+  outline: none;
+}
+
+.input-field:focus {
+  border-color: var(--accent-brown);
+}
+
+.btn-primary {
+  width: 100%;
+  padding: 13px;
+  margin-top: 10px;
+  background: var(--accent-brown);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+.switch-page {
+  margin-top: 24px;
+  text-align: center;
+  font-size: 13px;
+  color: #81766e;
+}
+
+.switch-page span {
+  color: var(--accent-brown);
+  font-weight: bold;
+  cursor: pointer;
+  margin-left: 4px;
+}
+
+@media (min-width: 600px) {
+  .mobile-frame {
+    max-width: 390px;
+    min-height: 750px;
+    margin: 24px auto;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+  }
+}
+
+
+/* Kartu Menu */
+#daftar-menu {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.menu-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 14px;
+  min-height: 110px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.menu-card h4 {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.menu-card p {
+  margin: 0;
+  font-size: 13px;
+  font-weight: bold;
+  color: var(--accent-brown);
+}
+
+/* Judul Menu */
+.login-container h3 {
+  margin: 24px 0 0;
+  font-size: 18px;
+  color: var(--accent-brown);
+}
+
+/* Tombol Keluar */
+#btn-logout {
+  margin-top: 24px;
+}
+#cari-menu {
+  margin: 12px 0;
+}
+
+#daftar-menu {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.menu-page {
+  width: 375px;
+  height: 780px;
+  min-height: 0;
+  padding: 0;
+  background-color: #ffffff;
+  border: 2px solid #2c221e;
+  border-radius: 32px 32px 0 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
+/* HEADER ATAS */
+.app-header {
+  background-color: #f7f4f1;
+  padding: 20px;
+  border-radius: 0 0 24px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.brand-name {
+  font-size: 16px;
+  font-weight: 800;
+  color: #4a3525;
+  letter-spacing: 0.3px;
+}
+
+.user-role {
+  font-size: 10px;
+  font-weight: 700;
+  color: #8c7a6b;
+  letter-spacing: 0.5px;
+}
+
+/* AREA KONTEN */
+.main-content {
+  flex: 1;
+  min-height: 0;
+  padding: 16px 20px 10px;
+  overflow-y: auto;
+}
+
+.page-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #111111;
+  margin: 0 0 5px;
+}
+
+.welcome-text {
+  font-size: 12px;
+  color: #8c7a6b;
+  margin-bottom: 14px;
+}
+
+/* SEARCH BAR */
+.search-box {
+  display: flex;
+  align-items: center;
+  background-color: #f7f4f1;
+  border: 1px solid #e6e0da;
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+}
+
+.search-icon {
+  width: 16px;
+  height: 16px;
+  color: #8c7a6b;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.search-input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 13px;
+  color: #4a3525;
+  width: 100%;
+}
+
+.search-input::placeholder {
+  color: #9e8e80;
+}
+
+/* TAB KATEGORI */
+.category-list {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.category-list::-webkit-scrollbar {
+  display: none;
+}
+
+.cat-pill {
+  background-color: #f3efeb;
+  color: #5c4938;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.cat-pill.active {
+  background-color: #4a3525;
+  color: #ffffff;
+}
+
+/* GRID MENU */
+.menu-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 14px;
+  row-gap: 20px;
+  padding: 0 0 20px;
+}
+
+/* CARD MENU */
+.menu-card {
+  position: relative;
+  background-color: #ffffff;
+  border: 1px solid #e5e0db;
+  border-radius: 16px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* FOTO PRODUK */
+.product-img {
+  width: 100%;
+  height: 82px;
+  background-color: #efebe7;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #8c7a6b;
+  font-size: 12px;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+/* NAMA PRODUK */
+.product-name {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #1a1a1a;
+  margin-bottom: 5px;
+  overflow-wrap: anywhere;
+}
+
+/* HARGA PRODUK */
+.product-price {
+  font-size: 13px;
+  font-weight: 600;
+  color: #5c4938;
+}
+
+/* STATUS TERSEDIA */
+.badge-available {
+  position: static;
+  align-self: flex-end;
+  display: inline-block;
+  width: fit-content;
+  background-color: #e6f0e8;
+  color: #3d6b47;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 20px;
+  margin-top: 10px;
+}
+
+/* NAVIGASI BAWAH */
+.bottom-nav {
+  background-color: #ffffff;
+  border-top: 1px solid #ece7e2;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 16px 10px;
+  flex-shrink: 0;
+}
+
+.nav-item {
+  background: transparent;
+  border: none;
+  text-decoration: none;
+  font-size: 12px;
+  color: #8c7a6b;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.nav-item.active {
+  color: #4a3525;
+  font-weight: 800;
+}
+
+/* RESPONSIVE MOBILE */
+@media (max-width: 400px) {
+  .menu-page {
+    width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    border: none;
+    border-radius: 0;
+  }
+}
+
+/* DETAIL PRODUK */
+
+.detail-image {
+  height: 220px;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.detail-price {
+  font-size: 18px;
+  margin: 12px 0;
+}
+
+.quantity-section {
+  margin-top: 30px;
+  margin-bottom: 24px;
+}
+
+.quantity-section label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.quantity-control {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.quantity-control button {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 10px;
+  background: #f0ebe6;
+  color: #5c3a21;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.quantity-control span {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.menu-card {
+  cursor: pointer;
+}
+.menu-card.habis {
+  opacity: 0.6;
+}
+
+.badge-habis {
+  align-self: flex-end;
+  display: inline-block;
+  width: fit-content;
+  background-color: #fdecea;
+  color: #b3261e;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 20px;
+  margin-top: 10px;
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  background: #ffffff;
+  color: #4a3525;
+  border: 1.5px solid #4a3525;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.btn-danger {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  background: #ffffff;
+  color: #b3261e;
+  border: 1.5px solid #b3261e;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.pesan-galat {
+  color: #b3261e;
+  font-size: 12px;
+  white-space: pre-line;
+  margin: 10px 0 0;
+}
+
+.pesan-info {
+  color: #3d6b47;
+  font-size: 12px;
+  margin: 0 0 10px;
+}
+
+.bagian-judul {
+  font-size: 14px;
+  margin: 18px 0 8px;
+  color: #4a3525;
+}
+
+/* Keranjang */
+.cart-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid #ece7e2;
+}
+
+.cart-info {
+  min-width: 0;
+}
+
+.cart-item .quantity-control {
+  gap: 10px;
+}
+
+.cart-item .quantity-control button {
+  width: 30px;
+  height: 30px;
+  font-size: 16px;
+}
+
+.ringkas {
+  margin-top: 12px;
+}
+
+.ringkas-baris {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+  padding: 3px 0;
+}
+
+.ringkas-total {
+  font-weight: 800;
+  font-size: 15px;
+  margin-top: 6px;
+}
+
+/* Pilih meja dan metode bayar */
+.meja-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+
+.meja-btn,
+.pilihan-btn {
+  padding: 10px 0;
+  background: #ffffff;
+  color: #4a3525;
+  border: 1.5px solid #d8d2cb;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.meja-btn.active,
+.pilihan-btn.active {
+  background: #4a3525;
+  border-color: #4a3525;
+  color: #ffffff;
+}
+
+.pilihan-grup {
+  display: flex;
+  gap: 8px;
+}
+
+.pilihan-btn {
+  flex: 1;
+}
+
+/* Riwayat pesanan */
+.order-card {
+  border: 1px solid #e5e0db;
+  border-radius: 12px;
+  padding: 12px;
+  margin-top: 12px;
+  cursor: pointer;
+  background: #ffffff;
+}
+
+.order-atas,
+.order-bawah {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.order-bawah {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #5c4938;
+}
+
+.status-pil {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: #efebe7;
+  color: #5c4938;
+}
+
+.status-baru { background: #fff4d6; color: #7a5a00; }
+.status-proses { background: #e3eefc; color: #1f4f8f; }
+.status-selesai { background: #e6f0e8; color: #3d6b47; }
+.status-batal { background: #fdecea; color: #b3261e; }
+
+/* Struk */
+.struk-box {
+  border: 1px dashed #cfc7bf;
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 8px;
+}
+
+.garis {
+  border: 0;
+  border-top: 1px dashed #cfc7bf;
+  margin: 10px 0;
+}
+
+.harga-satuan {
+  font-size: 11px;
+  color: #8c7a6b;
+  margin: -2px 0 6px;
+}
+
+/* Profil */
+.profil-kartu {
+  background: #f7f4f1;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 8px;
+}
+
+.profil-nama {
+  font-size: 16px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+/* Alamat server di layar login */
+.server-box {
+  margin-top: 20px;
+  font-size: 12px;
+  color: #81766e;
+}
+
+.server-box summary {
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+
