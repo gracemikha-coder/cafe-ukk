@@ -3,15 +3,13 @@
 @section('title', ($menu->exists ? 'Ubah' : 'Tambah') . ' Menu')
 
 @section('konten')
-    @php
-        $barisAwal = old('items', $menu->resepItems->map(fn ($r) => [
-            'bahan_id' => $r->bahan_id,
-            'takaran'  => $r->takaran + 0,
-        ])->values()->all());
-    @endphp
-
     <h1 class="judul">{{ $menu->exists ? 'Ubah' : 'Tambah' }} Menu</h1>
-    <p class="sub">Isi data menu dan resepnya (bahan dan takaran per 1 porsi) sekaligus.</p>
+    <p class="sub">
+        Isi data menu. Resep (bahan dan takaran per 1 porsi) dikelola di halaman Resep.
+        @if ($menu->exists)
+            &nbsp;|&nbsp; <a class="link-aksi" href="/manajer/resep/{{ $menu->id }}">Kelola resep menu ini</a>
+        @endif
+    </p>
 
     <form class="kartu" method="POST" style="max-width:720px"
           action="{{ $menu->exists ? '/manajer/menu/'.$menu->id : '/manajer/menu' }}">
@@ -42,82 +40,9 @@
             Menu aktif
         </label>
 
-        <hr style="border:0;border-top:1px solid #e2ddd7;margin:22px 0 10px">
-        <strong>Resep (bahan per 1 porsi)</strong>
-
-        @foreach ($errors->get('items.*') as $pesan)
-            @foreach ($pesan as $p)
-                <div class="error">{{ $p }}</div>
-            @endforeach
-        @endforeach
-
-        <div id="daftar-baris"></div>
-
-        <button type="button" class="btn btn-garis btn-kecil" id="tambah-baris" style="margin-top:14px">
-            + Tambah bahan
-        </button>
-
         <div style="margin-top:22px">
             <button class="btn btn-isi" type="submit">Simpan</button>
             <a class="btn btn-garis" href="/manajer/menu">Batal</a>
         </div>
     </form>
-
-    <template id="tpl-baris">
-        <div class="baris-resep" style="display:flex;gap:10px;align-items:flex-end;margin-top:12px">
-            <div style="flex:2">
-                <label>Bahan</label>
-                <select class="pilih-bahan" name="items[__i__][bahan_id]">
-                    @foreach ($bahans as $b)
-                        <option value="{{ $b->id }}" data-satuan="{{ $b->satuan_dasar }}">{{ $b->nama }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div style="flex:1">
-                <label>Takaran <span class="satuan" style="color:#877c72"></span></label>
-                <input type="number" step="0.01" min="0" name="items[__i__][takaran]" placeholder="mis. 18">
-            </div>
-            <button type="button" class="link-aksi hapus hapus-baris" style="margin-bottom:10px">Hapus</button>
-        </div>
-    </template>
-
-    <script>
-        (function () {
-            const daftar = document.getElementById('daftar-baris');
-            const tpl = document.getElementById('tpl-baris').innerHTML;
-            const awal = @json($barisAwal);
-            let i = 0;
-
-            function updateSatuan(baris) {
-                const opt = baris.querySelector('.pilih-bahan').selectedOptions[0];
-                baris.querySelector('.satuan').textContent = opt ? '(' + opt.dataset.satuan + ')' : '';
-            }
-
-            function tambah(data) {
-                daftar.insertAdjacentHTML('beforeend', tpl.replaceAll('__i__', i++));
-                const baris = daftar.lastElementChild;
-                if (data) {
-                    baris.querySelector('.pilih-bahan').value = data.bahan_id;
-                    baris.querySelector('input').value = data.takaran;
-                }
-                updateSatuan(baris);
-            }
-
-            document.getElementById('tambah-baris').addEventListener('click', function () { tambah(); });
-
-            daftar.addEventListener('change', function (e) {
-                if (e.target.classList.contains('pilih-bahan')) {
-                    updateSatuan(e.target.closest('.baris-resep'));
-                }
-            });
-
-            daftar.addEventListener('click', function (e) {
-                if (e.target.classList.contains('hapus-baris')) {
-                    e.target.closest('.baris-resep').remove();
-                }
-            });
-
-            awal.forEach(tambah);
-        })();
-    </script>
 @endsection

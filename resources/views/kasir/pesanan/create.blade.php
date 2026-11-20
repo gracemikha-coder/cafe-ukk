@@ -64,7 +64,7 @@
     <h1 class="judul">Buat Pesanan</h1>
     <p class="sub">Pilih menu untuk pesanan</p>
 
-   <div class="notif" id="notif">@foreach ($errors->all() as $pesan)<div>{{ $pesan }}</div>@endforeach</div>
+    <div class="notif" id="notif">@foreach ($errors->all() as $pesan)<div>{{ $pesan }}</div>@endforeach</div>
 
     <form method="POST" action="/kasir/pesanan" id="form-pesanan">
         @csrf
@@ -100,7 +100,15 @@
             {{-- Kanan: ringkasan --}}
             <div class="ringkasan">
                 <h2>Ringkasan Pesanan</h2>
-                <div class="kecil">item pesanan</div>
+                <div class="kecil">Item pesanan</div>
+
+                <label for="nomor_meja">Nomor meja</label>
+                <select id="nomor_meja" name="nomor_meja">
+                    <option value="">Pilih meja</option>
+                    @for ($i = 1; $i <= 10; $i++)
+                        <option value="{{ $i }}" @selected((string) old('nomor_meja') === (string) $i)>Meja {{ $i }}</option>
+                    @endfor
+                </select>
 
                 <label for="metode_bayar">Metode bayar</label>
                 <select id="metode_bayar" name="metode_bayar">
@@ -208,7 +216,7 @@
             document.getElementById('t-tot').textContent = rp(sub + svc + pjk);
         }
 
-        
+
         document.querySelectorAll('.kartu-menu').forEach(el => {
             el.addEventListener('click', function () {
                 const m = cariMenu(this.dataset.id);

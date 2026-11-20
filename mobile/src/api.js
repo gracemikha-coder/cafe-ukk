@@ -1,32 +1,32 @@
-// Alamat server bisa diatur dari layar login (disimpan di HP), tanpa mengubah kode.
-// Bawaan 127.0.0.1 hanya berlaku di browser komputer. Di HP isi alamat IP komputer, misalnya http://192.168.1.5:8000
-const ALAMAT_BAWAAN = 'http://127.0.0.1:8000';
+const DEFAULT_API_URL = 'http://127.0.0.1:8000/api';
 
-export function ambilAlamatServer() {
-  return localStorage.getItem('alamat_server') || ALAMAT_BAWAAN;
+// Menerima penulisan apa saja, lalu menghasilkan alamat yang benar:
+//   192.168.1.7:8000            -> http://192.168.1.7:8000/api
+//   http://192.168.1.7:8000     -> http://192.168.1.7:8000/api
+//   http://192.168.1.7:8000/api -> http://192.168.1.7:8000/api
+//   http://192.168.1.7:8000/api/ -> http://192.168.1.7:8000/api
+export function normalisasiUrl(url) {
+  let u = String(url || '').trim();
+  if (!u) return DEFAULT_API_URL;
+  if (!/^https?:\/\//i.test(u)) u = 'http://' + u;
+  u = u.replace(/\/+$/, '');
+  if (!/\/api$/i.test(u)) u += '/api';
+  return u;
 }
 
-export function simpanAlamatServer(alamat) {
-  let bersih = String(alamat || '').trim().replace(/\/+$/, '').replace(/\/api$/, '');
+export function getApiUrl() {
+  return normalisasiUrl(localStorage.getItem('api_url') || DEFAULT_API_URL);
+}
 
-  if (!bersih) {
-    localStorage.removeItem('alamat_server');
-    return ALAMAT_BAWAAN;
-  }
-
-  if (!/^https?:\/\//i.test(bersih)) {
-    bersih = 'http://' + bersih;
-  }
-
-  localStorage.setItem('alamat_server', bersih);
-  return bersih;
+export function setApiUrl(url) {
+  if (String(url || '').trim()) localStorage.setItem('api_url', normalisasiUrl(url));
 }
 
 export async function requestAPI(endpoint, data, method = 'POST', token = null) {
   let response;
 
   try {
-    response = await fetch(`${ambilAlamatServer()}/api/${endpoint}`, {
+    response = await fetch(`${getApiUrl()}/${endpoint}`, {
       method,
       headers: {
         'Content-Type': 'application/json',
@@ -36,28 +36,23 @@ export async function requestAPI(endpoint, data, method = 'POST', token = null) 
       ...(data ? { body: JSON.stringify(data) } : {}),
     });
   } catch (e) {
-    const error = new Error('Tidak dapat terhubung ke server. Periksa alamat server dan koneksi.');
-    error.status = 0;
-    throw error;
+    const err = new Error(`Tidak dapat terhubung ke server (${getApiUrl()}). Periksa alamat server dan koneksi.`);
+    err.status = 0;
+    throw err;
   }
 
   let result = {};
-  try {
-    result = await response.json();
-  } catch (e) {
-    result = {};
-  }
+  try { result = await response.json(); } catch (e) { /* respons kosong */ }
 
   if (!response.ok) {
-    const pesan =
+    const err = new Error(
       Object.values(result.errors || {}).flat().join('\n') ||
       result.message ||
-      'Terjadi kesalahan.';
-
-    const error = new Error(pesan);
-    error.status = response.status;
-    error.data = result;
-    throw error;
+      'Terjadi kesalahan.'
+    );
+    err.status = response.status;
+    err.data = result;
+    throw err;
   }
 
   return result;

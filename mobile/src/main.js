@@ -4,19 +4,23 @@ import '@ionic/core/css/normalize.css';
 import '@ionic/core/css/structure.css';
 import '@ionic/core/css/typography.css';
 import { defineCustomElements } from '@ionic/core/loader';
-import { requestAPI, ambilAlamatServer, simpanAlamatServer } from './api.js';
+import { requestAPI, getApiUrl, setApiUrl } from './api.js';
 
 defineCustomElements(window);
 
 const app = document.querySelector('#app');
 
-// ===== DATA SEMENTARA DI APLIKASI =====
-let semuaMenu = [];       // daftar menu terakhir dari API
-const keranjang = {};     // { idMenu: jumlah }
-let mejaDipilih = null;   // nomor meja 1-10
-let metodeBayar = '';     // 'Tunai' atau 'QRIS'
+// ===== STATE =====
+const state = {
+  nama: localStorage.getItem('nama_pelanggan') || '',
+  menu: [],          // cache daftar menu dari API
+  keranjang: {},     // { idMenu: jumlah }
+  meja: '1',
+  metode: 'Tunai'
+};
 
-// ===== FUNGSI BANTU =====
+const ambilToken = () => localStorage.getItem('token_pelanggan');
+const rupiah = angka => 'Rp ' + Number(angka || 0).toLocaleString('id-ID');
 
 // MENGAMANKAN TEKS DARI DATABASE
 function escapeHTML(teks) {
@@ -29,425 +33,295 @@ function escapeHTML(teks) {
   })[karakter]);
 }
 
-function rupiah(angka) {
-  return 'Rp ' + Number(angka).toLocaleString('id-ID');
-}
-
-function ambilToken() {
-  return localStorage.getItem('token_pelanggan');
-}
-
 // MENGAMBIL NAMA KATEGORI
 function ambilKategori(menu) {
-  if (typeof menu.kategori === 'string') {
-    return menu.kategori;
-  }
-
+  if (typeof menu.kategori === 'string') return menu.kategori;
   return menu.kategori?.nama || menu.kategori_nama || 'Lainnya';
 }
 
-function jumlahKeranjang() {
-  return Object.values(keranjang).reduce((total, jumlah) => total + jumlah, 0);
+// ===== SESI =====
+function keLogin(pesan = '') {
+  localStorage.removeItem('token_pelanggan');
+  localStorage.removeItem('wajib_ganti_password');
+  state.keranjang = {};
+  state.menu = [];
+  tampilkanHalaman('login', pesan);
 }
 
-function kosongkanKeranjang() {
-  Object.keys(keranjang).forEach(id => delete keranjang[id]);
-  mejaDipilih = null;
-  metodeBayar = '';
-}
-
-// MEMBERSIHKAN DATA LOGIN DI HP
-function keluarLokal() {
-  ['token_pelanggan', 'nama_pelanggan', 'nomor_hp', 'wajib_ganti_password']
-    .forEach(kunci => localStorage.removeItem(kunci));
-
-  kosongkanKeranjang();
-  semuaMenu = [];
-}
-
-// MEMANGGIL API DENGAN TOKEN. Sesi habis -> kembali ke login.
-async function panggil(endpoint, data = null, method = 'GET') {
-  try {
-    return await requestAPI(endpoint, data, method, ambilToken());
-  } catch (error) {
-    if (error.status === 401) {
-      keluarLokal();
-      tampilkanHalaman('login');
-      error.sudahDitangani = true;
-    } else if (error.status === 403 && error.data?.wajib_ganti_password) {
-      localStorage.setItem('wajib_ganti_password', 'true');
-      tampilkanGantiPassword(true);
-      error.sudahDitangani = true;
-    }
-    throw error;
+// true bila error sudah ditangani (sesi habis / wajib ganti password)
+function sesiBerakhir(error) {
+  if (error.status === 401) {
+    keLogin('Sesi berakhir, silakan login kembali.');
+    return true;
   }
+  if (error.status === 403 && localStorage.getItem('wajib_ganti_password') === 'true') {
+    tampilkanGantiPassword(true);
+    return true;
+  }
+  return false;
 }
 
-function tampilkanGalat(elemen, error) {
-  if (error.sudahDitangani || !elemen) return;
-  elemen.textContent = error.message;
-}
-
-// ===== KERANGKA HALAMAN (header, isi, navigasi bawah) =====
-function kerangka({ isi, aktif = null, kembaliKe = null }) {
-  const jumlah = jumlahKeranjang();
-
-  const itemNav = (kunci, label) => `
-    <button class="nav-item ${aktif === kunci ? 'active' : ''}" data-nav="${kunci}">
-      ${label}
-    </button>
-  `;
+// ===== KERANGKA HALAMAN (header + navigasi bawah) =====
+function kerangka(aktif, isi) {
+  const jumlah = Object.values(state.keranjang).reduce((a, b) => a + b, 0);
+  const nav = [
+    ['Menu', 'Menu'],
+    ['Keranjang', `Keranjang${jumlah ? ` (${jumlah})` : ''}`],
+    ['Pesanan', 'Pesanan'],
+    ['Profil', 'Profil']
+  ];
 
   app.innerHTML = `
     <main class="mobile-frame menu-page">
-
       <header class="app-header">
-        ${kembaliKe
-          ? `<button id="btn-kembali" class="nav-item">← Kembali</button>
-             <span class="brand-name">KOPI SENJA</span>`
-          : `<span class="brand-name">KOPI SENJA</span>
-             <span class="user-role">PELANGGAN • MOBILE</span>`}
+        <span class="brand-name">KOPI SENJA</span>
+        <span class="user-role">PELANGGAN • MOBILE</span>
       </header>
 
-      <section class="main-content">
-        ${isi}
-      </section>
+      <section class="main-content">${isi}</section>
 
-      ${aktif ? `
-        <nav class="bottom-nav">
-          ${itemNav('menu', 'Menu')}
-          ${itemNav('keranjang', jumlah ? `Keranjang (${jumlah})` : 'Keranjang')}
-          ${itemNav('pesanan', 'Pesanan')}
-          ${itemNav('profil', 'Profil')}
-        </nav>
-      ` : ''}
-
+      <nav class="bottom-nav">
+        ${nav.map(([kunci, label]) => `
+          <button class="nav-item ${aktif === kunci ? 'active' : ''}" data-nav="${kunci}">
+            ${label}
+          </button>`).join('')}
+      </nav>
     </main>
   `;
 
-  if (kembaliKe) {
-    app.querySelector('#btn-kembali').addEventListener('click', kembaliKe);
-  }
-
   app.querySelectorAll('[data-nav]').forEach(tombol => {
     tombol.addEventListener('click', () => {
-      const tujuan = tombol.dataset.nav;
-
-      if (tujuan === 'menu') tampilkanMenu();
-      else if (tujuan === 'keranjang') tampilkanKeranjang();
-      else if (tujuan === 'pesanan') tampilkanPesanan();
-      else if (tujuan === 'profil') tampilkanProfil();
+      ({
+        Menu: tampilkanBeranda,
+        Keranjang: () => tampilkanKeranjang(),
+        Pesanan: tampilkanPesanan,
+        Profil: () => tampilkanProfil()
+      })[tombol.dataset.nav]();
     });
   });
 }
 
 // ===== HALAMAN DAFTAR MENU =====
-async function tampilkanMenu() {
-  kerangka({
-    aktif: 'menu',
-    isi: `
-      <h1 class="page-title">Daftar Menu</h1>
+async function tampilkanBeranda() {
+  kerangka('Menu', `
+    <h1 class="page-title">Daftar Menu</h1>
+    <p class="welcome-text">Selamat datang, ${escapeHTML(state.nama)}!</p>
 
-      <p class="welcome-text">
-        Selamat datang, ${escapeHTML(localStorage.getItem('nama_pelanggan') || '')}!
-      </p>
+    <div class="search-box">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input type="text" id="cari-menu" placeholder="Cari menu..." class="search-input">
+    </div>
 
-      <div class="search-box">
-        <svg class="search-icon" viewBox="0 0 24 24"
-          fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="8"></circle>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-        </svg>
+    <div class="category-list" id="daftar-kategori">
+      <button class="cat-pill active" data-category="Semua">Semua</button>
+    </div>
 
-        <input type="text" id="cari-menu" placeholder="Cari menu..." class="search-input">
-      </div>
-
-      <div class="category-list" id="daftar-kategori">
-        <button class="cat-pill active" data-category="Semua">Semua</button>
-      </div>
-
-      <div id="daftar-menu" class="menu-grid">
-        <p class="description">Memuat menu...</p>
-      </div>
-    `
-  });
+    <div id="daftar-menu" class="menu-grid">
+      <p class="description">Memuat menu...</p>
+    </div>
+  `);
 
   const daftarMenu = app.querySelector('#daftar-menu');
   const inputCari = app.querySelector('#cari-menu');
   const daftarKategori = app.querySelector('#daftar-kategori');
   let kategoriAktif = 'Semua';
 
-  // AMBIL DATA MENU DARI API
   try {
-    const hasil = await panggil('menu');
+    const hasil = await requestAPI('menu', null, 'GET', ambilToken());
+    state.menu = hasil.data || [];
 
-    // menu nonaktif dan menu tanpa resep tidak ditampilkan; menu Habis tetap tampil
-    semuaMenu = (hasil.data || []).filter(
-      menu => menu.status === 'Tersedia' || menu.status === 'Habis'
-    );
-  } catch (error) {
-    tampilkanGalat(daftarMenu, error);
-    return;
-  }
-
-  if (semuaMenu.length === 0) {
-    daftarMenu.innerHTML = `<p class="description">Belum ada menu tersedia.</p>`;
-    return;
-  }
-
-  // MEMBUAT DAFTAR KATEGORI
-  const kategori = [...new Set(semuaMenu.map(menu => ambilKategori(menu)))];
-
-  daftarKategori.innerHTML = `
-    <button class="cat-pill active" data-category="Semua">Semua</button>
-    ${kategori.map(item => `
-      <button class="cat-pill" data-category="${escapeHTML(item)}">
-        ${escapeHTML(item)}
-      </button>
-    `).join('')}
-  `;
-
-  // MENAMPILKAN CARD MENU
-  function tampilkanKartu(dataMenu) {
-    if (dataMenu.length === 0) {
-      daftarMenu.innerHTML = `<p class="description">Menu tidak ditemukan.</p>`;
+    if (state.menu.length === 0) {
+      daftarMenu.innerHTML = '<p class="description">Belum ada menu tersedia.</p>';
       return;
     }
 
-    daftarMenu.innerHTML = dataMenu.map(menu => {
-      const tersedia = menu.status === 'Tersedia';
+    const kategori = [...new Set(state.menu.map(menu => ambilKategori(menu)))];
 
-      return `
-        <article class="menu-card ${tersedia ? '' : 'habis'}" data-menu-id="${menu.id}">
-          <div class="product-img">[ foto produk ]</div>
-          <div class="product-name">${escapeHTML(menu.nama)}</div>
-          <div class="product-price">${rupiah(menu.harga)}</div>
-          <span class="${tersedia ? 'badge-available' : 'badge-habis'}">
-            ${escapeHTML(menu.status)}
-          </span>
-        </article>
-      `;
-    }).join('');
-  }
+    daftarKategori.innerHTML = `
+      <button class="cat-pill active" data-category="Semua">Semua</button>
+      ${kategori.map(item => `
+        <button class="cat-pill" data-category="${escapeHTML(item)}">${escapeHTML(item)}</button>
+      `).join('')}
+    `;
 
-  // FILTER PENCARIAN DAN KATEGORI
-  function filterMenu() {
-    const kataKunci = inputCari.value.toLowerCase().trim();
+    function tampilkanMenu(dataMenu) {
+      if (dataMenu.length === 0) {
+        daftarMenu.innerHTML = '<p class="description">Menu tidak ditemukan.</p>';
+        return;
+      }
 
-    const hasilFilter = semuaMenu.filter(menu => {
-      const cocokNama = String(menu.nama || '').toLowerCase().includes(kataKunci);
-      const cocokKategori = kategoriAktif === 'Semua' || ambilKategori(menu) === kategoriAktif;
+      daftarMenu.innerHTML = dataMenu.map(menu => {
+        const bisa = menu.bisa_dipesan !== false;
+        const dikeranjang = state.keranjang[menu.id] || 0;
 
-      return cocokNama && cocokKategori;
+        return `
+          <article class="menu-card ${bisa ? '' : 'off'}" data-menu-id="${menu.id}">
+            <div class="product-img">[ foto produk ]</div>
+            <div class="product-name">${escapeHTML(menu.nama)}</div>
+            <div class="product-price">${rupiah(menu.harga)}</div>
+            <span class="${bisa ? 'badge-available' : 'badge-habis'}">
+              ${bisa ? 'Tersedia' : escapeHTML(menu.status || 'Habis')}
+            </span>
+            ${dikeranjang ? `<span class="badge-cart">${dikeranjang} di keranjang</span>` : ''}
+          </article>`;
+      }).join('');
+    }
+
+    function filterMenu() {
+      const kataKunci = inputCari.value.toLowerCase().trim();
+      tampilkanMenu(state.menu.filter(menu =>
+        String(menu.nama || '').toLowerCase().includes(kataKunci) &&
+        (kategoriAktif === 'Semua' || ambilKategori(menu) === kategoriAktif)
+      ));
+    }
+
+    inputCari.addEventListener('input', filterMenu);
+
+    daftarKategori.addEventListener('click', event => {
+      const tombol = event.target.closest('.cat-pill');
+      if (!tombol) return;
+      kategoriAktif = tombol.dataset.category;
+      daftarKategori.querySelectorAll('.cat-pill').forEach(item => item.classList.remove('active'));
+      tombol.classList.add('active');
+      filterMenu();
     });
 
-    tampilkanKartu(hasilFilter);
+    daftarMenu.addEventListener('click', event => {
+      const card = event.target.closest('.menu-card');
+      if (!card || card.classList.contains('off')) return; // menu habis tidak bisa dipilih
+      tampilkanDetail(Number(card.dataset.menuId));
+    });
+
+    tampilkanMenu(state.menu);
+
+  } catch (error) {
+    if (sesiBerakhir(error)) return;
+    daftarMenu.innerHTML = `<p class="description">${escapeHTML(error.message)}</p>`;
   }
-
-  inputCari.addEventListener('input', filterMenu);
-
-  daftarKategori.addEventListener('click', event => {
-    const tombol = event.target.closest('.cat-pill');
-    if (!tombol) return;
-
-    kategoriAktif = tombol.dataset.category;
-
-    daftarKategori.querySelectorAll('.cat-pill')
-      .forEach(item => item.classList.remove('active'));
-    tombol.classList.add('active');
-
-    filterMenu();
-  });
-
-  daftarMenu.addEventListener('click', event => {
-    const card = event.target.closest('.menu-card');
-    if (!card) return;
-
-    tampilkanDetail(Number(card.dataset.menuId));
-  });
-
-  tampilkanKartu(semuaMenu);
 }
 
-// ===== DETAIL MENU =====
+// ===== DETAIL PRODUK =====
 function tampilkanDetail(idMenu) {
-  const menu = semuaMenu.find(item => Number(item.id) === Number(idMenu));
+  const menu = state.menu.find(item => Number(item.id) === Number(idMenu));
   if (!menu) return;
 
-  const bisaDipesan = menu.bisa_dipesan === true;
-  let jumlah = 1;
+  let jumlahPesanan = state.keranjang[menu.id] || 1;
 
-  kerangka({
-    kembaliKe: tampilkanMenu,
-    isi: `
-      <div class="product-img detail-image">[ foto produk ]</div>
+  kerangka('Menu', `
+    <button id="btn-kembali" class="btn-back">← Kembali</button>
 
-      <h1 class="page-title">${escapeHTML(menu.nama)}</h1>
-      <p class="product-price detail-price">${rupiah(menu.harga)}</p>
+    <div class="product-img detail-image">[ foto produk ]</div>
 
-      <p class="welcome-text">
-        ${bisaDipesan ? 'Produk tersedia dan siap dipesan.' : `Status: ${escapeHTML(menu.status)}. Menu belum bisa dipesan.`}
-      </p>
+    <h1 class="page-title">${escapeHTML(menu.nama)}</h1>
+    <p class="product-price detail-price">${rupiah(menu.harga)}</p>
+    <p class="welcome-text">Produk tersedia dan siap dipesan.</p>
 
-      <div class="quantity-section">
-        <label>Jumlah Pesanan</label>
-        <div class="quantity-control">
-          <button id="kurangi-jumlah">−</button>
-          <span id="jumlah-produk">1</span>
-          <button id="tambah-jumlah">+</button>
-        </div>
+    <div class="quantity-section">
+      <label>Jumlah Pesanan</label>
+      <div class="quantity-control">
+        <button id="kurangi-jumlah">−</button>
+        <span id="jumlah-produk">${jumlahPesanan}</span>
+        <button id="tambah-jumlah">+</button>
       </div>
+    </div>
 
-      <p id="info" class="pesan-info"></p>
-
-      <button id="tambah-keranjang" class="btn-primary" ${bisaDipesan ? '' : 'disabled'}>
-        Tambahkan ke Keranjang
-      </button>
-    `
-  });
+    <button id="tambah-keranjang" class="btn-primary">Simpan ke Keranjang</button>
+  `);
 
   const jumlahProduk = app.querySelector('#jumlah-produk');
-  const info = app.querySelector('#info');
 
   app.querySelector('#kurangi-jumlah').addEventListener('click', () => {
-    if (jumlah > 1) {
-      jumlah--;
-      jumlahProduk.textContent = jumlah;
-    }
+    if (jumlahPesanan > 1) { jumlahPesanan--; jumlahProduk.textContent = jumlahPesanan; }
   });
 
   app.querySelector('#tambah-jumlah').addEventListener('click', () => {
-    jumlah++;
-    jumlahProduk.textContent = jumlah;
+    jumlahPesanan++;
+    jumlahProduk.textContent = jumlahPesanan;
   });
 
+  app.querySelector('#btn-kembali').addEventListener('click', tampilkanBeranda);
+
   app.querySelector('#tambah-keranjang').addEventListener('click', () => {
-    keranjang[menu.id] = (keranjang[menu.id] || 0) + jumlah;
-    info.textContent = `Ditambahkan. ${menu.nama} di keranjang: ${keranjang[menu.id]} porsi.`;
+    state.keranjang[menu.id] = jumlahPesanan;
+    tampilkanBeranda();
   });
 }
 
-// ===== KERANJANG, PILIH MEJA, PESAN =====
-function tampilkanKeranjang() {
-  const baris = Object.keys(keranjang)
-    .map(id => ({
-      menu: semuaMenu.find(item => String(item.id) === String(id)),
-      id,
-      jumlah: keranjang[id]
-    }))
-    .filter(item => item.menu);
-
-  if (baris.length === 0) {
-    kerangka({
-      aktif: 'keranjang',
-      isi: `
-        <h1 class="page-title">Keranjang</h1>
-        <p class="welcome-text">Keranjang masih kosong. Pilih menu dulu.</p>
-        <button id="ke-menu" class="btn-primary">Lihat Menu</button>
-      `
-    });
-    app.querySelector('#ke-menu').addEventListener('click', tampilkanMenu);
-    return;
+// ===== KERANJANG + PESAN =====
+async function tampilkanKeranjang(pesanError = '') {
+  if (state.menu.length === 0) {
+    try {
+      const hasil = await requestAPI('menu', null, 'GET', ambilToken());
+      state.menu = hasil.data || [];
+    } catch (error) {
+      if (sesiBerakhir(error)) return;
+    }
   }
 
-  // perkiraan biaya (nilai akhir dihitung server)
-  const subtotal = baris.reduce((total, item) => total + item.menu.harga * item.jumlah, 0);
-  const service = Math.round(subtotal * 0.05);
-  const pajak = Math.round((subtotal + service) * 0.10);
+  const baris = Object.entries(state.keranjang)
+    .map(([id, jml]) => ({ menu: state.menu.find(m => Number(m.id) === Number(id)), jml }))
+    .filter(x => x.menu && x.jml > 0);
 
-  kerangka({
-    aktif: 'keranjang',
-    isi: `
-      <h1 class="page-title">Keranjang</h1>
-      <p class="welcome-text">Periksa pesanan, lalu pilih meja dan cara bayar.</p>
+  const subtotal = baris.reduce((t, x) => t + Number(x.menu.harga) * x.jml, 0);
 
-      <div id="daftar-keranjang">
-        ${baris.map(item => `
-          <div class="cart-item">
-            <div class="cart-info">
-              <div class="product-name">${escapeHTML(item.menu.nama)}</div>
-              <div class="product-price">${rupiah(item.menu.harga)}</div>
-            </div>
-            <div class="quantity-control">
-              <button data-aksi="kurang" data-id="${item.id}">−</button>
-              <span>${item.jumlah}</span>
-              <button data-aksi="tambah" data-id="${item.id}">+</button>
-            </div>
+  const opsiMeja = Array.from({ length: 10 }, (_, i) =>
+    `<option value="${i + 1}" ${state.meja === String(i + 1) ? 'selected' : ''}>Meja ${i + 1}</option>`
+  ).join('');
+
+  kerangka('Keranjang', `
+    <h1 class="page-title">Keranjang</h1>
+    <p class="welcome-text">Periksa pesanan sebelum dikirim</p>
+
+    ${baris.length === 0 ? '<p class="description">Keranjang masih kosong. Pilih menu terlebih dahulu.</p>' : `
+      ${baris.map(x => `
+        <div class="cart-item" data-id="${x.menu.id}">
+          <div>
+            <div class="product-name">${escapeHTML(x.menu.nama)}</div>
+            <div class="product-price">${rupiah(x.menu.harga)}</div>
           </div>
-        `).join('')}
-      </div>
+          <div class="quantity-control">
+            <button data-aksi="kurang">−</button>
+            <span>${x.jml}</span>
+            <button data-aksi="tambah">+</button>
+          </div>
+        </div>`).join('')}
 
-      <div class="ringkas">
-        <div class="ringkas-baris"><span>Subtotal</span><span>${rupiah(subtotal)}</span></div>
-        <div class="ringkas-baris"><span>Service 5%</span><span>${rupiah(service)}</span></div>
-        <div class="ringkas-baris"><span>Pajak 10%</span><span>${rupiah(pajak)}</span></div>
-        <div class="ringkas-baris ringkas-total"><span>Total (perkiraan)</span><span>${rupiah(subtotal + service + pajak)}</span></div>
-      </div>
+      <div class="summary-row"><span>Subtotal</span><b>${rupiah(subtotal)}</b></div>
+      <p class="description">Service 5% dan pajak 10% dihitung pada struk.</p>
 
-      <h3 class="bagian-judul">Pilih Meja</h3>
-      <div class="meja-grid" id="meja-grid">
-        ${Array.from({ length: 10 }, (_, i) => i + 1).map(nomor => `
-          <button type="button" class="meja-btn ${mejaDipilih === nomor ? 'active' : ''}" data-meja="${nomor}">
-            ${nomor}
-          </button>
-        `).join('')}
-      </div>
+      <label class="field-label">Nomor meja</label>
+      <select id="pilih-meja" class="input-field">${opsiMeja}</select>
 
-      <h3 class="bagian-judul">Metode Bayar</h3>
-      <div class="pilihan-grup" id="bayar-grup">
-        ${['Tunai', 'QRIS'].map(nama => `
-          <button type="button" class="pilihan-btn ${metodeBayar === nama ? 'active' : ''}" data-bayar="${nama}">
-            ${nama}
-          </button>
-        `).join('')}
-      </div>
+      <label class="field-label">Metode bayar (hanya dicatat)</label>
+      <select id="pilih-metode" class="input-field">
+        <option ${state.metode === 'Tunai' ? 'selected' : ''}>Tunai</option>
+        <option ${state.metode === 'QRIS' ? 'selected' : ''}>QRIS</option>
+      </select>
 
-      <p id="pesan-galat" class="pesan-galat"></p>
-
+      <p id="pesan-error" class="error-text">${escapeHTML(pesanError)}</p>
       <button id="btn-pesan" class="btn-primary">Pesan Sekarang</button>
-    `
+    `}
+  `);
+
+  if (baris.length === 0) return;
+
+  app.querySelectorAll('.cart-item [data-aksi]').forEach(tombol => {
+    tombol.addEventListener('click', () => {
+      const id = tombol.closest('.cart-item').dataset.id;
+      const baru = (state.keranjang[id] || 0) + (tombol.dataset.aksi === 'tambah' ? 1 : -1);
+      if (baru <= 0) delete state.keranjang[id]; else state.keranjang[id] = baru;
+      tampilkanKeranjang();
+    });
   });
 
-  // UBAH JUMLAH
-  app.querySelector('#daftar-keranjang').addEventListener('click', event => {
-    const tombol = event.target.closest('[data-aksi]');
-    if (!tombol) return;
+  app.querySelector('#pilih-meja').addEventListener('change', e => (state.meja = e.target.value));
+  app.querySelector('#pilih-metode').addEventListener('change', e => (state.metode = e.target.value));
 
-    const id = tombol.dataset.id;
-    const perubahan = tombol.dataset.aksi === 'tambah' ? 1 : -1;
-    const baru = (keranjang[id] || 0) + perubahan;
-
-    if (baru <= 0) delete keranjang[id];
-    else keranjang[id] = baru;
-
-    tampilkanKeranjang();
-  });
-
-  // PILIH MEJA
-  app.querySelector('#meja-grid').addEventListener('click', event => {
-    const tombol = event.target.closest('[data-meja]');
-    if (!tombol) return;
-
-    mejaDipilih = Number(tombol.dataset.meja);
-
-    app.querySelectorAll('.meja-btn').forEach(item => item.classList.remove('active'));
-    tombol.classList.add('active');
-  });
-
-  // PILIH METODE BAYAR
-  app.querySelector('#bayar-grup').addEventListener('click', event => {
-    const tombol = event.target.closest('[data-bayar]');
-    if (!tombol) return;
-
-    metodeBayar = tombol.dataset.bayar;
-
-    app.querySelectorAll('.pilihan-btn').forEach(item => item.classList.remove('active'));
-    tombol.classList.add('active');
-  });
-
-  // KIRIM PESANAN KE SERVER (server yang memeriksa meja, stok, dan aturan lain)
   const tombolPesan = app.querySelector('#btn-pesan');
-  const pesan = app.querySelector('#pesan-galat');
+  const pesan = app.querySelector('#pesan-error');
 
   tombolPesan.addEventListener('click', async () => {
     tombolPesan.disabled = true;
@@ -455,246 +329,183 @@ function tampilkanKeranjang() {
     pesan.textContent = '';
 
     try {
-      const hasil = await panggil('pesanan', {
-        nomor_meja: mejaDipilih,
-        metode_bayar: metodeBayar || null,
-        items: baris.map(item => ({ menu_id: Number(item.id), jumlah: item.jumlah }))
-      }, 'POST');
+      const hasil = await requestAPI('pesanan', {
+        nomor_meja: Number(state.meja),
+        metode_bayar: state.metode,
+        items: baris.map(x => ({ menu_id: Number(x.menu.id), jumlah: x.jml }))
+      }, 'POST', ambilToken());
 
-      kosongkanKeranjang();
-      tampilkanStruk(hasil.data.id);
+      state.keranjang = {};
+      tampilkanStruk(hasil.data.id, hasil.message || 'Pesanan berhasil dibuat.');
 
     } catch (error) {
-      tampilkanGalat(pesan, error);
-
-      if (document.body.contains(tombolPesan)) {
-        tombolPesan.disabled = false;
-        tombolPesan.textContent = 'Pesan Sekarang';
-      }
+      if (sesiBerakhir(error)) return;
+      pesan.textContent = error.message;
+      tombolPesan.disabled = false;
+      tombolPesan.textContent = 'Pesan Sekarang';
     }
   });
 }
 
 // ===== RIWAYAT PESANAN =====
 async function tampilkanPesanan() {
-  kerangka({
-    aktif: 'pesanan',
-    isi: `
-      <h1 class="page-title">Pesanan Saya</h1>
-      <p class="welcome-text">Ketuk pesanan untuk melihat struk dan status.</p>
-      <button id="btn-muat" class="btn-secondary">Muat Ulang</button>
-      <div id="daftar-pesanan"><p class="description">Memuat pesanan...</p></div>
-    `
-  });
+  kerangka('Pesanan', `
+    <h1 class="page-title">Pesanan Saya</h1>
+    <p class="welcome-text">Ketuk pesanan untuk melihat struk</p>
+    <div id="daftar-pesanan"><p class="description">Memuat pesanan...</p></div>
+  `);
 
-  const daftar = app.querySelector('#daftar-pesanan');
-  app.querySelector('#btn-muat').addEventListener('click', tampilkanPesanan);
+  const wadah = app.querySelector('#daftar-pesanan');
 
   try {
-    const hasil = await panggil('pesanan');
-    const data = hasil.data || [];
+    const hasil = await requestAPI('pesanan', null, 'GET', ambilToken());
+    const daftar = hasil.data || [];
 
-    if (data.length === 0) {
-      daftar.innerHTML = `<p class="description">Belum ada pesanan.</p>`;
+    if (daftar.length === 0) {
+      wadah.innerHTML = '<p class="description">Belum ada pesanan.</p>';
       return;
     }
 
-    daftar.innerHTML = data.map(item => `
-      <article class="order-card" data-id="${item.id}">
-        <div class="order-atas">
-          <strong>Pesanan #${item.id}</strong>
-          <span class="status-pil ${kelasStatus(item.status)}">${escapeHTML(item.status)}</span>
+    wadah.innerHTML = daftar.map(p => `
+      <div class="order-card" data-id="${p.id}">
+        <div>
+          <div class="product-name">Pesanan #${p.id} • Meja ${escapeHTML(p.nomor_meja ?? '-')}</div>
+          <div class="description" style="margin:4px 0 0">${escapeHTML(p.waktu)} • ${rupiah(p.total)}</div>
         </div>
-        <div class="order-bawah">
-          <span>Meja ${escapeHTML(item.nomor_meja ?? '-')} • ${escapeHTML(item.waktu)}</span>
-          <strong>${rupiah(item.total)}</strong>
-        </div>
-      </article>
-    `).join('');
+        <span class="status-pill status-${escapeHTML(String(p.status).toLowerCase())}">${escapeHTML(p.status)}</span>
+      </div>`).join('');
 
-    daftar.addEventListener('click', event => {
-      const kartu = event.target.closest('.order-card');
-      if (!kartu) return;
-
-      tampilkanStruk(Number(kartu.dataset.id));
-    });
+    wadah.querySelectorAll('.order-card').forEach(card =>
+      card.addEventListener('click', () => tampilkanStruk(card.dataset.id))
+    );
 
   } catch (error) {
-    tampilkanGalat(daftar, error);
+    if (sesiBerakhir(error)) return;
+    wadah.innerHTML = `<p class="error-text">${escapeHTML(error.message)}</p>`;
   }
 }
 
-function kelasStatus(status) {
-  return {
-    Baru: 'status-baru',
-    Diproses: 'status-proses',
-    Selesai: 'status-selesai',
-    Batal: 'status-batal'
-  }[status] || '';
-}
-
-// ===== STRUK DAN STATUS SATU PESANAN =====
-async function tampilkanStruk(idPesanan) {
-  kerangka({
-    kembaliKe: tampilkanPesanan,
-    isi: `<p class="description">Memuat struk...</p>`
-  });
-
-  const isi = app.querySelector('.main-content');
+// ===== STRUK =====
+async function tampilkanStruk(id, pesanSukses = '') {
+  kerangka('Pesanan', '<p class="description">Memuat struk...</p>');
 
   try {
-    const hasil = await panggil(`pesanan/${idPesanan}`);
+    const hasil = await requestAPI(`pesanan/${id}`, null, 'GET', ambilToken());
     const p = hasil.data;
 
-    isi.innerHTML = `
-      <h1 class="page-title">Struk Pesanan #${p.id}</h1>
-      <p class="welcome-text">
-        Status: <span class="status-pil ${kelasStatus(p.status)}">${escapeHTML(p.status)}</span>
-      </p>
+    kerangka('Pesanan', `
+      <button id="btn-kembali" class="btn-back">← Daftar Pesanan</button>
+      <h1 class="page-title">Struk #${p.id}</h1>
+      <p class="welcome-text">${escapeHTML(p.waktu)} • Meja ${escapeHTML(p.nomor_meja ?? '-')} • ${escapeHTML(p.metode_bayar)}</p>
 
-      <div class="struk-box">
-        <div class="ringkas-baris"><span>Tanggal</span><span>${escapeHTML(p.waktu)}</span></div>
-        ${p.nomor_meja ? `<div class="ringkas-baris"><span>Meja</span><span>${escapeHTML(p.nomor_meja)}</span></div>` : ''}
-        <div class="ringkas-baris"><span>Metode bayar</span><span>${escapeHTML(p.metode_bayar)}</span></div>
+      ${pesanSukses ? `<p class="success-text">${escapeHTML(pesanSukses)}</p>` : ''}
 
-        <hr class="garis">
-
-        ${p.items.map(item => `
-          <div class="ringkas-baris">
-            <span>${escapeHTML(item.nama)} x${item.jumlah}</span>
-            <span>${rupiah(item.subtotal)}</span>
-          </div>
-          <div class="harga-satuan">@ ${rupiah(item.harga_satuan)}</div>
-        `).join('')}
-
-        <hr class="garis">
-
-        <div class="ringkas-baris"><span>Subtotal</span><span>${rupiah(p.subtotal)}</span></div>
-        <div class="ringkas-baris"><span>Service 5%</span><span>${rupiah(p.service)}</span></div>
-        <div class="ringkas-baris"><span>Pajak 10%</span><span>${rupiah(p.pajak)}</span></div>
-        <div class="ringkas-baris ringkas-total"><span>Total</span><span>${rupiah(p.total)}</span></div>
+      <div class="summary-row">
+        <span>Status</span>
+        <span class="status-pill status-${escapeHTML(String(p.status).toLowerCase())}">${escapeHTML(p.status)}</span>
       </div>
 
-      <button id="btn-muat-struk" class="btn-secondary">Muat Ulang Status</button>
-    `;
+      <div class="struk-box">
+        ${(p.items || []).map(i => `
+          <div class="summary-row">
+            <span>${escapeHTML(i.nama)}<br><small>${i.jumlah} × ${rupiah(i.harga_satuan)}</small></span>
+            <span>${rupiah(i.subtotal)}</span>
+          </div>`).join('')}
 
-    app.querySelector('#btn-muat-struk').addEventListener('click', () => tampilkanStruk(idPesanan));
+        <div class="struk-total">
+          <div class="summary-row"><span>Subtotal</span><span>${rupiah(p.subtotal)}</span></div>
+          <div class="summary-row"><span>Service 5%</span><span>${rupiah(p.service)}</span></div>
+          <div class="summary-row"><span>Pajak 10%</span><span>${rupiah(p.pajak)}</span></div>
+          <div class="summary-row grand"><span>Total</span><span>${rupiah(p.total)}</span></div>
+        </div>
+      </div>
+
+      <button id="btn-segarkan" class="btn-outline">Perbarui Status</button>
+    `);
+
+    app.querySelector('#btn-kembali').addEventListener('click', tampilkanPesanan);
+    app.querySelector('#btn-segarkan').addEventListener('click', () => tampilkanStruk(id));
 
   } catch (error) {
-    tampilkanGalat(isi, error);
+    if (sesiBerakhir(error)) return;
+    kerangka('Pesanan', `
+      <button id="btn-kembali" class="btn-back">← Daftar Pesanan</button>
+      <p class="error-text">${escapeHTML(error.message)}</p>`);
+    app.querySelector('#btn-kembali').addEventListener('click', tampilkanPesanan);
   }
 }
 
 // ===== PROFIL =====
-function tampilkanProfil() {
-  kerangka({
-    aktif: 'profil',
-    isi: `
-      <h1 class="page-title">Profil</h1>
-
-      <div class="profil-kartu">
-        <div class="profil-nama">${escapeHTML(localStorage.getItem('nama_pelanggan') || '')}</div>
-        <div class="description">${escapeHTML(localStorage.getItem('nomor_hp') || '')}</div>
-      </div>
-
-      <button id="btn-ganti" class="btn-secondary">Ganti Password</button>
-      <button id="btn-keluar" class="btn-danger">Keluar</button>
-    `
-  });
+function tampilkanProfil(pesanSukses = '') {
+  kerangka('Profil', `
+    <h1 class="page-title">Profil</h1>
+    <p class="welcome-text">${escapeHTML(state.nama)}</p>
+    ${pesanSukses ? `<p class="success-text">${escapeHTML(pesanSukses)}</p>` : ''}
+    <button id="btn-ganti" class="btn-outline">Ganti Password</button>
+    <button id="btn-logout" class="btn-primary">Keluar</button>
+  `);
 
   app.querySelector('#btn-ganti').addEventListener('click', () => tampilkanGantiPassword(false));
-  app.querySelector('#btn-keluar').addEventListener('click', keluar);
-}
 
-async function keluar() {
-  try {
-    await requestAPI('logout', null, 'POST', ambilToken());
-  } catch (error) {
-    // tetap keluar dari aplikasi walau server tidak terjangkau
-  }
-
-  keluarLokal();
-  tampilkanHalaman('login');
-}
-
-// ===== GANTI PASSWORD =====
-function tampilkanGantiPassword(wajib = false) {
-  kerangka({
-    kembaliKe: wajib ? null : tampilkanProfil,
-    isi: `
-      <h1 class="page-title">Ganti Password</h1>
-
-      <p class="welcome-text">
-        ${wajib
-          ? 'Password Anda masih sementara. Ganti dulu sebelum memesan.'
-          : 'Masukkan password lama dan password baru.'}
-      </p>
-
-      <form class="login-form" id="form-password">
-        <label>Password Lama</label>
-        <input class="input-field" name="password_lama" type="password" required>
-
-        <label>Password Baru</label>
-        <input class="input-field" name="password_baru" type="password" minlength="8" required>
-
-        <label>Konfirmasi Password Baru</label>
-        <input class="input-field" name="konfirmasi" type="password" minlength="8" required>
-
-        <p id="pesan-galat" class="pesan-galat"></p>
-
-        <button class="btn-primary" type="submit">Simpan Password</button>
-        ${wajib ? '<button type="button" id="btn-keluar" class="btn-secondary">Keluar</button>' : ''}
-      </form>
-    `
+  app.querySelector('#btn-logout').addEventListener('click', async () => {
+    try { await requestAPI('logout', null, 'POST', ambilToken()); } catch (e) { /* tetap keluar */ }
+    keLogin('Anda sudah keluar.');
   });
+}
+
+// ===== GANTI PASSWORD (wajib = true setelah reset oleh Kasir) =====
+function tampilkanGantiPassword(wajib = false) {
+  const isi = `
+    <h1 class="page-title">Ganti Password</h1>
+    <p class="welcome-text">${wajib
+      ? 'Anda memakai password sementara. Ganti password sebelum melanjutkan.'
+      : 'Ubah password akun Anda.'}</p>
+
+    <form class="login-form" id="form-ganti">
+      <label>Password Lama</label>
+      <input class="input-field" name="password_lama" type="password" required>
+
+      <label>Password Baru (minimal 8 karakter)</label>
+      <input class="input-field" name="password_baru" type="password" minlength="8" required>
+
+      <p id="pesan-error" class="error-text"></p>
+      <button class="btn-primary" type="submit">Simpan</button>
+      ${wajib ? '<button type="button" id="btn-keluar" class="btn-outline">Keluar</button>' : ''}
+    </form>`;
 
   if (wajib) {
-    app.querySelector('#btn-keluar').addEventListener('click', keluar);
+    app.innerHTML = `<main class="mobile-frame menu-page"><header class="app-header">
+      <span class="brand-name">KOPI SENJA</span></header>
+      <section class="main-content">${isi}</section></main>`;
+    app.querySelector('#btn-keluar').addEventListener('click', () => keLogin());
+  } else {
+    kerangka('Profil', isi);
   }
 
-  app.querySelector('#form-password').addEventListener('submit', async event => {
+  app.querySelector('#form-ganti').addEventListener('submit', async event => {
     event.preventDefault();
-
     const form = event.currentTarget;
     const tombol = form.querySelector('button[type="submit"]');
-    const pesan = app.querySelector('#pesan-galat');
+    const pesan = app.querySelector('#pesan-error');
     const data = Object.fromEntries(new FormData(form).entries());
 
-    if (data.password_baru !== data.konfirmasi) {
-      pesan.textContent = 'Konfirmasi password tidak sama.';
-      return;
-    }
-
     tombol.disabled = true;
-    tombol.textContent = 'Memproses...';
     pesan.textContent = '';
 
     try {
-      await requestAPI('ganti-password', {
-        password_lama: data.password_lama,
-        password_baru: data.password_baru
-      }, 'POST', ambilToken());
-
+      await requestAPI('ganti-password', data, 'POST', ambilToken());
       localStorage.setItem('wajib_ganti_password', 'false');
-      alert('Password berhasil diganti.');
-      tampilkanMenu();
-
+      if (wajib) tampilkanBeranda(); else tampilkanProfil('Password berhasil diganti.');
     } catch (error) {
-      if (error.status === 401) {
-        keluarLokal();
-        tampilkanHalaman('login');
-        return;
-      }
-
+      if (error.status === 401) return keLogin('Sesi berakhir, silakan login kembali.');
       pesan.textContent = error.message;
       tombol.disabled = false;
-      tombol.textContent = 'Simpan Password';
     }
   });
 }
 
 // ===== HALAMAN LOGIN DAN DAFTAR =====
-function tampilkanHalaman(halaman = 'login') {
+function tampilkanHalaman(halaman = 'login', info = '') {
   app.innerHTML = `
     <main class="mobile-frame">
 
@@ -713,29 +524,27 @@ function tampilkanHalaman(halaman = 'login') {
             : 'Buat akun untuk mulai memesan.'}
         </p>
 
+        ${info ? `<p class="success-text">${escapeHTML(info)}</p>` : ''}
+
         <form class="login-form" id="auth-form">
 
           ${halaman === 'daftar' ? `
             <label>Nama Lengkap</label>
-            <input class="input-field" name="nama" type="text"
-              placeholder="Masukkan nama lengkap" required>
+            <input class="input-field" name="nama" type="text" placeholder="Masukkan nama lengkap" required>
           ` : ''}
 
           <label>Nomor HP</label>
-          <input class="input-field" name="nomor_hp" type="tel"
-            placeholder="Masukkan nomor HP" required>
+          <input class="input-field" name="nomor_hp" type="tel" placeholder="Masukkan nomor HP" required>
 
           <label>Password</label>
-          <input class="input-field" name="password" type="password"
-            placeholder="Masukkan password" minlength="8" required>
+          <input class="input-field" name="password" type="password" placeholder="Masukkan password" minlength="8" required>
 
           ${halaman === 'daftar' ? `
             <label>Konfirmasi Password</label>
-            <input class="input-field" name="konfirmasi" type="password"
-              placeholder="Ulangi password" minlength="8" required>
+            <input class="input-field" name="konfirmasi" type="password" placeholder="Ulangi password" minlength="8" required>
           ` : ''}
 
-          <p id="pesan-error" class="pesan-galat"></p>
+          <p id="pesan-error" class="error-text"></p>
 
           <button class="btn-primary" type="submit">
             ${halaman === 'login' ? 'Masuk' : 'Daftar'}
@@ -752,29 +561,18 @@ function tampilkanHalaman(halaman = 'login') {
 
         <details class="server-box">
           <summary>Alamat server</summary>
-          <input class="input-field" id="alamat-server" type="url"
-            value="${escapeHTML(ambilAlamatServer())}">
-          <button type="button" class="btn-secondary" id="simpan-server">Simpan Alamat</button>
-          <p class="description" id="info-server"></p>
+          <input class="input-field" id="alamat-server" value="${escapeHTML(getApiUrl())}">
+          <p class="description" style="margin:6px 0 0">Di HP isi dengan IP laptop, contoh http://192.168.1.10:8000/api</p>
         </details>
 
       </section>
     </main>
   `;
 
-  // SIMPAN ALAMAT SERVER (untuk HP: isi alamat IP komputer)
-  app.querySelector('#simpan-server').addEventListener('click', () => {
-    const tersimpan = simpanAlamatServer(app.querySelector('#alamat-server').value);
-    app.querySelector('#alamat-server').value = tersimpan;
-    app.querySelector('#info-server').textContent = `Tersimpan: ${tersimpan}`;
-  });
-
-  // PINDAH LOGIN / DAFTAR
   app.querySelector('[data-page]').addEventListener('click', () => {
     tampilkanHalaman(halaman === 'login' ? 'daftar' : 'login');
   });
 
-  // PROSES FORM
   app.querySelector('#auth-form').addEventListener('submit', async event => {
     event.preventDefault();
 
@@ -782,6 +580,8 @@ function tampilkanHalaman(halaman = 'login') {
     const tombol = form.querySelector('button[type="submit"]');
     const pesan = app.querySelector('#pesan-error');
     const data = Object.fromEntries(new FormData(form).entries());
+
+    setApiUrl(app.querySelector('#alamat-server').value);
 
     if (halaman === 'daftar' && data.password !== data.konfirmasi) {
       pesan.textContent = 'Konfirmasi password tidak sama.';
@@ -800,8 +600,7 @@ function tampilkanHalaman(halaman = 'login') {
           password: data.password
         });
 
-        alert('Pendaftaran berhasil. Silakan login.');
-        tampilkanHalaman('login');
+        tampilkanHalaman('login', 'Pendaftaran berhasil. Silakan login.');
 
       } else {
         const hasil = await requestAPI('login', {
@@ -811,14 +610,11 @@ function tampilkanHalaman(halaman = 'login') {
 
         localStorage.setItem('token_pelanggan', hasil.token);
         localStorage.setItem('nama_pelanggan', hasil.pengguna.nama);
-        localStorage.setItem('nomor_hp', hasil.pengguna.nomor_hp);
-        localStorage.setItem('wajib_ganti_password', String(hasil.wajib_ganti_password));
+        localStorage.setItem('wajib_ganti_password', hasil.wajib_ganti_password ? 'true' : 'false');
+        state.nama = hasil.pengguna.nama;
 
-        if (hasil.wajib_ganti_password) {
-          tampilkanGantiPassword(true);
-        } else {
-          tampilkanMenu();
-        }
+        if (hasil.wajib_ganti_password) tampilkanGantiPassword(true);
+        else tampilkanBeranda();
       }
 
     } catch (error) {
@@ -835,11 +631,8 @@ function tampilkanHalaman(halaman = 'login') {
 
 // ===== HALAMAN AWAL =====
 if (ambilToken()) {
-  if (localStorage.getItem('wajib_ganti_password') === 'true') {
-    tampilkanGantiPassword(true);
-  } else {
-    tampilkanMenu();
-  }
+  if (localStorage.getItem('wajib_ganti_password') === 'true') tampilkanGantiPassword(true);
+  else tampilkanBeranda();
 } else {
   tampilkanHalaman();
 }

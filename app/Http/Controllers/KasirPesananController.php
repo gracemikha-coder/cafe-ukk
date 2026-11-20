@@ -19,7 +19,7 @@ class KasirPesananController extends Controller
             ->when(
                 in_array($status, $daftarStatus),
                 fn ($q) => $q->where('status', $status),
-                fn ($q) => $q->whereIn('status', ['Baru', 'Diproses'])   // bawaan: Baru dan Diproses
+                fn ($q) => $q->whereIn('status', ['Baru', 'Diproses'])  
             )
             ->orderByDesc('id')
             ->get();
@@ -35,12 +35,16 @@ class KasirPesananController extends Controller
 
     public function store(Request $request, PesananService $service)
     {
-        // metode bayar (NTF-07). Nomor meja tidak dipakai kasir, hanya pesanan dari APK.
+        // metode bayar (NTF-07) dan nomor meja wajib (1-10).
         Validator::make($request->all(), [
             'metode_bayar' => 'required|in:Tunai,QRIS',
+            'nomor_meja'   => 'required|integer|between:1,10',
         ], [
             'metode_bayar.required' => 'Pilih metode pembayaran: Tunai atau QRIS.',
             'metode_bayar.in'       => 'Pilih metode pembayaran: Tunai atau QRIS.',
+            'nomor_meja.required'   => 'Nomor meja harus antara 1 dan 10.',
+            'nomor_meja.integer'    => 'Nomor meja harus antara 1 dan 10.',
+            'nomor_meja.between'    => 'Nomor meja harus antara 1 dan 10.',
         ])->validate();
 
         // kumpulkan item: hanya menu yang kolom jumlahnya diisi
@@ -55,6 +59,7 @@ class KasirPesananController extends Controller
         // jika ada yang gagal (stok kurang, menu nonaktif, dll.) service melempar
         // ValidationException, otomatis kembali ke form dengan pesan dan isian lama
         $pesanan = $service->buat($request->user(), [
+            'nomor_meja'   => (int) $request->nomor_meja,
             'metode_bayar' => $request->metode_bayar,
             'items'        => $items,
         ]);

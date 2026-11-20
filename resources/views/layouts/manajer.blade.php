@@ -98,6 +98,8 @@
         <a class="menu {{ request()->is('manajer/resep*') ? 'aktif' : '' }}" href="/manajer/resep">Resep</a>
         <a class="menu {{ request()->is('manajer/stok-masuk*') ? 'aktif' : '' }}" href="/manajer/stok-masuk">Stok Masuk</a>
         <a class="menu {{ request()->is('manajer/laporan*') ? 'aktif' : '' }}" href="/manajer/laporan">Laporan</a>
+        <a class="menu {{ request()->is('manajer/hpp*') ? 'aktif' : '' }}" href="/manajer/hpp">HPP &amp; Margin</a>
+        <a class="menu {{ request()->is('manajer/impor-csv*') ? 'aktif' : '' }}" href="/manajer/impor-csv">Impor CSV</a>
         <a class="keluar" href="/logout">Keluar dari sistem</a>
     </aside>
 

@@ -1,5 +1,9 @@
 {
   "appId": "com.cafeukk.app",
   "appName": "Cafe UKK",
-  "webDir": "dist"
+  "webDir": "dist",
+  "server": {
+    "cleartext": true,
+    "androidScheme": "http"
+  }
 }

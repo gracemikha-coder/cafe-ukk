@@ -10,6 +10,8 @@ use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\ResepController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\KasirPelangganController;
+use App\Http\Controllers\HppController;
+use App\Http\Controllers\ImporCsvController;
 
 Route::redirect('/', '/login');
 
@@ -40,6 +42,9 @@ Route::middleware(['auth', 'role:manajer'])->prefix('manajer')->group(function (
     Route::get('/resep/{menu}', [ResepController::class, 'show']);
     Route::post('/resep/{menu}', [ResepController::class, 'store']);
     Route::delete('/resep/{menu}/{item}', [ResepController::class, 'destroy']);
+    Route::get('/hpp', [HppController::class, 'index']);
+    Route::get('/impor-csv', [ImporCsvController::class, 'index']);
+    Route::post('/impor-csv', [ImporCsvController::class, 'proses']);
 });
 
 Route::middleware(['auth', 'role:kasir'])->prefix('kasir')->group(function () {
